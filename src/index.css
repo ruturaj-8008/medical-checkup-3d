@@ -438,22 +438,37 @@ body {
 
 /* Mobile Devices (max-width: 768px) */
 @media (max-width: 768px) {
+  :root {
+    --header-height: 62px;
+  }
+
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
   .app-container {
     grid-template-columns: 1fr;
     grid-template-rows: var(--header-height) 320px auto auto;
+    min-width: 0;
   }
 
   header.col-span-3 {
     grid-column: span 1;
+    min-width: 0;
+    padding: 0 16px !important;
   }
 
   main {
     grid-column: span 1;
     height: 320px;
+    min-width: 0;
   }
 
   aside {
+    width: 100%;
     min-height: auto;
+    min-width: 0;
   }
 
   aside:first-of-type {
@@ -467,6 +482,22 @@ body {
     grid-column: 1;
     grid-row: 4;
   }
+
+  /* Keep telemetry cards legible while using the available mobile width. */
+  aside:first-of-type .overflow-y-auto {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding-right: 0;
+  }
+
+  .metric-card {
+    min-width: 0;
+  }
+
+  .metric-header {
+    gap: 8px;
+  }
 }
 
 /* Very Small Mobile Devices (max-width: 480px) */
@@ -477,7 +508,14 @@ body {
   }
 
   header.col-span-3 {
-    padding: 0 16px !important;
+    padding: 0 12px !important;
+  }
+
+  header .hud-font {
+    max-width: 164px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .hud-title {
@@ -494,6 +532,10 @@ body {
   
   .metric-value {
     font-size: 1.6rem !important;
+  }
+
+  aside:first-of-type .overflow-y-auto {
+    grid-template-columns: 1fr;
   }
 }
 
