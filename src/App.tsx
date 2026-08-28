@@ -3,9 +3,13 @@ import { MedicalCanvas } from './components/MedicalCanvas';
 import { VitalsPanel } from './components/VitalsPanel';
 import { ScanFlow } from './components/ScanFlow';
 import { DiagnosticReport } from './components/DiagnosticReport';
-import { ShieldCheck, Cpu, Database } from 'lucide-react';
+import { ShieldCheck, Cpu, Database, LogOut, UserRound } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './auth/AuthProvider';
 
 function App() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanProgress, setScanProgress] = useState<number>(0);
@@ -110,8 +114,25 @@ function App() {
           </div>
         </div>
 
-        {/* Realtime clock */}
+        {/* Authenticated identity, account controls, and realtime clock */}
         <div className="flex items-center gap-3">
+          <button
+            className="hidden md:flex items-center gap-2 text-[10px] hud-font text-text-secondary hover:text-cyan"
+            type="button"
+            onClick={() => navigate('/account')}
+          >
+            <UserRound size={14} />
+            <span>{user?.email}</span>
+          </button>
+          <button
+            className="flex items-center gap-1 text-[10px] hud-font text-text-secondary hover:text-magenta"
+            type="button"
+            onClick={() => void logout().then(() => navigate('/login', { replace: true }))}
+            aria-label="Sign out"
+          >
+            <LogOut size={14} />
+            <span className="hidden sm:inline">SIGN OUT</span>
+          </button>
           <span className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold">
             {currentTime || 'LOADING...'}
           </span>
