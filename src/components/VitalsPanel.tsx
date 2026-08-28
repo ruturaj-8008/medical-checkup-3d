@@ -141,7 +141,7 @@ export const VitalsPanel: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full gap-4 p-4 select-none">
+    <section className="flex flex-col h-full gap-4 p-4" aria-labelledby="vitals-monitor-title">
       {/* HUD Header */}
       <div className="flex flex-col gap-1 border-b border-white/5 pb-3">
         <div className="flex justify-between items-center">
@@ -152,7 +152,7 @@ export const VitalsPanel: React.FC = () => {
             Active
           </span>
         </div>
-        <h2 className="hud-title text-xl">Vitals Monitor</h2>
+        <h2 id="vitals-monitor-title" className="hud-title text-xl">Vitals Monitor</h2>
       </div>
 
       {/* Real-time EKG Oscilloscope View */}
@@ -167,7 +167,7 @@ export const VitalsPanel: React.FC = () => {
         
         {/* Dynamic SVG Waveform */}
         <div className="w-full h-14 bg-[#05070e]/80 border border-cyan/10 rounded-md relative overflow-hidden flex items-center">
-          <svg className="w-full h-full" viewBox="0 0 300 50" preserveAspectRatio="none">
+          <svg className="w-full h-full" viewBox="0 0 300 50" preserveAspectRatio="none" role="img" aria-label={`Live EKG waveform. Heart rate: ${heartRate} beats per minute.`}>
             {/* Grid background lines */}
             <line x1="0" y1="12.5" x2="300" y2="12.5" stroke="rgba(0, 240, 255, 0.05)" strokeDasharray="3 3" />
             <line x1="0" y1="25" x2="300" y2="25" stroke="rgba(0, 240, 255, 0.1)" />
@@ -250,6 +250,9 @@ export const VitalsPanel: React.FC = () => {
           );
         })}
       </div>
-    </div>
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        Current vital signs: heart rate {heartRate} beats per minute, blood pressure {bp.sys} over {bp.dia}, oxygen saturation {spo2} percent, respiratory rate {resp} breaths per minute, and body temperature {temp} degrees Celsius.
+      </p>
+    </section>
   );
 };

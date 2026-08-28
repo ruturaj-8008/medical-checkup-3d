@@ -52,13 +52,13 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
   const strokeDashoffset = circumference - (overallScore / 100) * circumference;
 
   return (
-    <div className="flex flex-col h-full gap-4 p-4 select-none overflow-y-auto">
+    <section className="flex flex-col h-full gap-4 p-4 overflow-y-auto" aria-labelledby="diagnostic-report-title">
       {/* HUD Header */}
       <div className="flex flex-col gap-1 border-b border-white/5 pb-3">
         <span className="text-[10px] text-magenta hud-font font-bold tracking-widest uppercase">
           // Diagnostic Output
         </span>
-        <h2 className="hud-title text-xl">Health Assessment</h2>
+        <h2 id="diagnostic-report-title" className="hud-title text-xl">Health Assessment</h2>
       </div>
 
       {/* Circular Progress Score Card */}
@@ -74,7 +74,7 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
 
         {/* Circular SVG Ring */}
         <div className="relative w-28 h-28 flex items-center justify-center">
-          <svg className="w-full h-full transform -rotate-90">
+          <svg className="w-full h-full transform -rotate-90" role="img" aria-label={`Bio-Safety Rating: ${overallScore} out of 100`}>
             {/* Background Ring */}
             <circle
               cx="56"
@@ -129,7 +129,15 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
               
               {/* Micro Progress Bar */}
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden"
+                  role="progressbar"
+                  aria-label={`${item.name} score`}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={item.score}
+                  aria-valuetext={`${item.score} percent, ${item.status}`}
+                >
                   <div 
                     className="h-full rounded-full transition-all duration-1000 ease-out"
                     style={{ 
@@ -174,12 +182,13 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
 
       {/* Action Trigger - Reset & Rescan */}
       <button
+        type="button"
         onClick={onReset}
         className="btn-neon btn-neon-magenta mt-2 py-3.5 font-bold text-xs w-full flex items-center justify-center gap-2"
       >
         <RefreshCw size={13} className="animate-spin-slow" />
         Reset Telemetry & Rescan
       </button>
-    </div>
+    </section>
   );
 };
