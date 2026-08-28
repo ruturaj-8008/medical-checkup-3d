@@ -18,7 +18,7 @@
   --color-magenta-glow: rgba(255, 42, 95, 0.25);
   --color-emerald: #39ff14;
   --color-emerald-glow: rgba(57, 255, 20, 0.25);
-  --color-violet: #8b5cf6;
+  --color-violet: #a78bfa;
   --color-violet-glow: rgba(139, 92, 246, 0.25);
   --color-amber: #f59e0b;
   --color-amber-glow: rgba(245, 158, 11, 0.25);
@@ -27,8 +27,8 @@
   --border-cyan: rgba(0, 240, 255, 0.2);
   --border-white: rgba(255, 255, 255, 0.08);
   --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-secondary: #b6c2d3;
+  --text-muted: #94a3b8;
   
   /* Layout */
   --header-height: 70px;
@@ -46,7 +46,48 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+button,
+[role='button'] {
   user-select: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-cyan);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(0, 240, 255, 0.25);
+}
+
+.skip-link {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border: 2px solid var(--color-cyan);
+  border-radius: 0.5rem;
+  background: var(--color-bg-panel-solid);
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 body {
@@ -203,6 +244,19 @@ body {
   left: 100%;
 }
 
+.btn-neon:focus-visible {
+  border-color: var(--color-cyan);
+}
+
+.btn-neon:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 .btn-neon-cyan:hover {
   background: rgba(0, 240, 255, 0.1);
   border-color: var(--color-cyan);
@@ -313,6 +367,17 @@ body {
 
 .spinning {
   animation: spin 20s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Card metrics styling */

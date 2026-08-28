@@ -79,12 +79,13 @@ function App() {
 
   return (
     <div className="app-container">
+      <a className="skip-link" href="#medical-visualization">Skip to interactive medical visualization</a>
       {/* 1. Header HUD */}
-      <header className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20">
+      <header className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20" aria-label="AURA-3D system status">
         {/* Logo and system status */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-cyan rounded-full animate-pulse shadow-[0_0_8px_#00f0ff]" />
+            <span className="w-3 h-3 bg-cyan rounded-full animate-pulse shadow-[0_0_8px_#00f0ff]" aria-hidden="true" />
             <h1 className="hud-title text-lg tracking-wider font-extrabold flex items-center gap-2">
               AURA-3D <span className="text-xs font-semibold text-cyan hud-font bg-cyan/10 border border-cyan/25 px-2 py-0.5 rounded">V.6</span>
             </h1>
@@ -96,35 +97,35 @@ function App() {
 
         {/* HUD Sub Stats Indicators */}
         <div className="hidden lg:flex items-center gap-6 text-[10px] hud-font">
-          <div className="flex items-center gap-2 text-emerald">
-            <ShieldCheck size={14} />
+          <div className="flex items-center gap-2 text-emerald" aria-label="Secure link active">
+            <ShieldCheck size={14} aria-hidden="true" />
             <span>SECURE LINK</span>
           </div>
-          <div className="flex items-center gap-2 text-cyan">
-            <Cpu size={14} className="animate-spin-slow" />
+          <div className="flex items-center gap-2 text-cyan" aria-label="AI core active">
+            <Cpu size={14} className="animate-spin-slow" aria-hidden="true" />
             <span>AI CORE: ACTIVE</span>
           </div>
-          <div className="flex items-center gap-2 text-text-secondary">
-            <Database size={14} />
+          <div className="flex items-center gap-2 text-text-secondary" aria-label="Local memory available">
+            <Database size={14} aria-hidden="true" />
             <span>LOCAL MEMORY</span>
           </div>
         </div>
 
         {/* Realtime clock */}
         <div className="flex items-center gap-3">
-          <span className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold">
+          <time className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold" aria-label={`System time: ${currentTime || 'loading'}`}>
             {currentTime || 'LOADING...'}
-          </span>
+          </time>
         </div>
       </header>
 
       {/* 2. Left Side - Telemetry Vitals */}
-      <aside className="border-r border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
+      <aside className="border-r border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden" aria-label="Biometric telemetry">
         <VitalsPanel />
       </aside>
 
       {/* 3. Center - 3D Render Canvas */}
-      <main className="relative flex items-center justify-center overflow-hidden">
+      <main id="medical-visualization" className="relative flex items-center justify-center overflow-hidden" aria-label="Interactive medical visualization">
         <MedicalCanvas
           activeNode={activeNode}
           onSelectNode={handleSelectNode}
@@ -134,7 +135,7 @@ function App() {
       </main>
 
       {/* 4. Right Side - Scan Flow Wizard / Diagnostic Report */}
-      <aside className="border-l border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
+      <aside className="border-l border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden" aria-label="Diagnostic controls and report">
         {!showReport ? (
           <ScanFlow
             isScanning={isScanning}
