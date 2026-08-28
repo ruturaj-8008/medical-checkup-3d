@@ -436,36 +436,108 @@ body {
   }
 }
 
-/* Mobile Devices (max-width: 768px) */
-@media (max-width: 768px) {
+/* Mobile Devices (below 768px) */
+@media (max-width: 767px) {
+  :root {
+    --header-height: 60px;
+  }
+
   .app-container {
+    grid-template-areas:
+      "header"
+      "visualization"
+      "vitals"
+      "controller";
     grid-template-columns: 1fr;
-    grid-template-rows: var(--header-height) 320px auto auto;
+    grid-template-rows: var(--header-height) 300px auto auto;
+    width: 100%;
   }
 
   header.col-span-3 {
-    grid-column: span 1;
+    grid-area: header;
+    grid-column: 1;
+    padding: 0 12px !important;
+    gap: 8px;
+  }
+
+  header.col-span-3 > div:first-child {
+    min-width: 0;
+  }
+
+  header .hud-title {
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  header .text-\[11px\] {
+    max-width: 148px;
+    overflow: hidden;
+    padding: 5px 8px;
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   main {
-    grid-column: span 1;
-    height: 320px;
+    grid-area: visualization;
+    grid-column: 1;
+    height: 300px;
+    min-width: 0;
   }
 
   aside {
     min-height: auto;
+    min-width: 0;
+  }
+
+  aside > div {
+    gap: 12px !important;
+    padding: 12px !important;
   }
 
   aside:first-of-type {
+    grid-area: vitals;
     grid-column: 1;
-    grid-row: 3;
+    grid-row: auto;
     border-right: none;
     border-bottom: 1px solid var(--border-white);
   }
 
   aside:last-of-type {
+    grid-area: controller;
     grid-column: 1;
-    grid-row: 4;
+    grid-row: auto;
+  }
+
+  /* Keep the visual HUD useful without allowing its desktop overlays to overflow. */
+  main .w-\[320px\] {
+    width: 250px !important;
+    height: 250px !important;
+  }
+
+  main .w-\[360px\] {
+    width: 280px !important;
+    height: 280px !important;
+  }
+
+  main > div > div:last-child {
+    bottom: 12px;
+    max-width: calc(100% - 24px);
+    padding: 6px 10px;
+  }
+
+  main > div > div:last-child p {
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+
+  .metric-card {
+    padding: 12px;
+  }
+
+  .metric-value {
+    font-size: 1.75rem;
   }
 }
 
