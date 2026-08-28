@@ -115,6 +115,9 @@ function App() {
           <span className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold">
             {currentTime || 'LOADING...'}
           </span>
+          <span className="hidden sm:inline text-[9px] hud-font text-text-muted tracking-wider">
+            © 2026 AURA-3D
+          </span>
         </div>
       </header>
 
