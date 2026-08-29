@@ -436,24 +436,64 @@ body {
   }
 }
 
-/* Mobile Devices (max-width: 768px) */
-@media (max-width: 768px) {
+/* Mobile Devices (below 768px) */
+@media (max-width: 767px) {
+  :root {
+    --header-height: 64px;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
   .app-container {
     grid-template-columns: 1fr;
-    grid-template-rows: var(--header-height) 320px auto auto;
+    grid-template-rows: var(--header-height) minmax(280px, 44vh) auto auto;
+    width: 100%;
   }
 
   header.col-span-3 {
     grid-column: span 1;
+    padding: 0 12px !important;
+    gap: 8px;
+  }
+
+  header.col-span-3 > div:first-child {
+    min-width: 0;
+  }
+
+  header.col-span-3 .hud-title {
+    font-size: 0.9rem !important;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  header.col-span-3 .hud-title span {
+    font-size: 0.6rem !important;
+    padding-inline: 0.35rem !important;
+  }
+
+  header.col-span-3 > div:last-child {
+    min-width: 0;
+  }
+
+  header.col-span-3 > div:last-child span {
+    max-width: 148px;
+    overflow: hidden;
+    padding-inline: 0.5rem !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   main {
     grid-column: span 1;
-    height: 320px;
+    height: auto;
+    min-height: 280px;
   }
 
   aside {
     min-height: auto;
+    width: 100%;
   }
 
   aside:first-of-type {
@@ -466,6 +506,32 @@ body {
   aside:last-of-type {
     grid-column: 1;
     grid-row: 4;
+  }
+
+  aside > div {
+    height: auto !important;
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .metric-card {
+    padding: 12px;
+  }
+
+  .metric-value {
+    font-size: 1.75rem;
+  }
+
+  .btn-neon {
+    min-height: 44px;
+  }
+
+  .w-56 {
+    width: min(14rem, calc(100vw - 72px)) !important;
+  }
+
+  .grid-overlay {
+    background-size: 28px 28px;
   }
 }
 
@@ -485,15 +551,23 @@ body {
   }
 
   .app-container {
-    grid-template-rows: var(--header-height) 280px auto auto;
+    grid-template-rows: var(--header-height) 260px auto auto;
   }
 
   main {
-    height: 280px;
+    min-height: 260px;
   }
   
   .metric-value {
     font-size: 1.6rem !important;
+  }
+
+  header.col-span-3 > div:last-child span {
+    display: none;
+  }
+
+  .metric-header {
+    gap: 8px;
   }
 }
 
