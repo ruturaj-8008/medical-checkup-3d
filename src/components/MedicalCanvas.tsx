@@ -317,11 +317,14 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
     <div 
       ref={mountRef} 
       className="relative w-full h-full cursor-crosshair overflow-hidden"
+      role="region"
+      aria-label="Interactive holographic bioscan model"
+      aria-describedby="bioscan-instructions"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       {/* ThreeJS Canvas */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" aria-hidden="true" />
 
       {/* Grid HUD Details */}
       <div className="grid-overlay" />
@@ -355,8 +358,12 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
           >
             {/* Glow Core Dot */}
             <button
+              type="button"
               onClick={() => onSelectNode(node.id)}
-              className={`group flex items-center justify-center relative w-5 h-5 rounded-full border transition-all duration-300 focus:outline-none ${
+              aria-label={`${isActive ? 'Close' : 'Analyze'} ${node.name}: ${node.description}`}
+              aria-pressed={isActive}
+              aria-describedby={`scan-node-${node.id}`}
+              className={`group flex items-center justify-center relative w-5 h-5 rounded-full border transition-all duration-300 ${
                 isActive 
                   ? 'bg-magenta border-magenta scale-125 shadow-[0_0_15px_#ff2a5f]' 
                   : 'bg-cyan/20 border-cyan hover:bg-cyan/50 hover:scale-110 hover:shadow-[0_0_10px_#00f0ff]'
@@ -366,7 +373,9 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
               
               {/* Tooltip Card (Projected Modern HUD Label) */}
               <div 
+                id={`scan-node-${node.id}`}
                 className={`absolute left-8 flex flex-col gap-1 p-3 w-56 rounded-lg glass-panel text-left pointer-events-none opacity-0 translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 ${
+                className={`absolute left-8 flex flex-col gap-1 p-3 w-56 rounded-lg glass-panel text-left pointer-events-none opacity-0 translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 group-focus-within:opacity-100 group-focus-within:translate-x-0 ${
                   isActive ? 'border-magenta/40 bg-color-bg-panel-solid' : 'border-cyan/30'
                 }`}
               >
@@ -383,7 +392,7 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
                 </p>
                 <div className="flex items-center gap-1.5 mt-2 text-[9px] text-cyan/90 uppercase font-semibold">
                   <span className="w-1.5 h-1.5 rounded-full bg-cyan animate-pulse" />
-                  Click to scan node
+                  Select to analyze node
                 </div>
               </div>
             </button>
@@ -392,9 +401,9 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
       })}
 
       {/* Floating Canvas Instructions */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center pointer-events-none bg-black/35 backdrop-blur-md px-4 py-2 border border-white/5 rounded-full">
+      <div id="bioscan-instructions" className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center pointer-events-none bg-black/35 backdrop-blur-md px-4 py-2 border border-white/5 rounded-full">
         <p className="text-[10px] text-text-secondary uppercase tracking-widest hud-font">
-          Interactive Holographic DNA Model // Move mouse to tilt, click nodes to analyze
+          Interactive holographic DNA model. Move the pointer to tilt; use Tab to select a node, then Enter or Space to analyze it.
         </p>
       </div>
     </div>
