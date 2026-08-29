@@ -29,6 +29,7 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1);
   const [logConsole, setLogConsole] = useState<string[]>(['[SYS] Biometric System initialized. Ready to scan...']);
   const terminalEndRef = useRef<HTMLDivElement>(null);
+  const completionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const steps: ScanStep[] = [
     {
@@ -90,6 +91,10 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
   useEffect(() => {
     if (!isScanning) {
       setCurrentStepIndex(-1);
+      if (completionTimerRef.current) {
+        clearTimeout(completionTimerRef.current);
+        completionTimerRef.current = null;
+      }
       return;
     }
 
@@ -128,13 +133,23 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
     // Trigger complete
     if (scanProgress >= 100) {
       setLogConsole(prev => [...prev, '[SYS] ALL DIAGNOSTIC CHECKS COMPLETE. COMPILING REPORT...']);
-      const timer = setTimeout(() => {
+      completionTimerRef.current = setTimeout(() => {
+        completionTimerRef.current = null;
         onScanComplete();
       }, 1000);
-      return () => clearTimeout(timer);
+      return () => {
+        if (completionTimerRef.current) {
+          clearTimeout(completionTimerRef.current);
+          completionTimerRef.current = null;
+        }
+      };
     }
 
   }, [scanProgress, isScanning, currentStepIndex]);
+
+  useEffect(() => () => {
+    if (completionTimerRef.current) clearTimeout(completionTimerRef.current);
+  }, []);
 
   const handleStart = () => {
     setLogConsole(['[SYS] Core initialized.', '[SYS] Aligning 3D scanning lasers...']);
@@ -189,6 +204,8 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
           {/* Action Trigger */}
           <button
             onClick={handleStart}
+            data-testid="start-diagnostic-scan"
+            aria-label="Initialize diagnostic scan"
             className="btn-neon btn-neon-cyan pulsing-hud-cyan py-4 font-bold text-sm w-full"
           >
             <Play size={16} />
@@ -200,7 +217,13 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
         <div className="flex flex-col flex-1 gap-4 justify-between">
           <div className="flex flex-col gap-3">
             {/* Scanning Indicator Panel */}
-            <div className="glass-panel p-4 flex flex-col gap-3 pulsing-hud-cyan bg-black/35 relative overflow-hidden">
+            <div
+              className="glass-panel p-4 flex flex-col gap-3 pulsing-hud-cyan bg-black/35 relative overflow-hidden"
+              data-testid="scan-progress"
+              data-scan-progress={Math.round(scanProgress)}
+              aria-busy="true"
+              aria-label={`Diagnostic scan in progress: ${Math.round(scanProgress)} percent`}
+            >
               <div className="scan-line" />
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
@@ -253,6 +276,8 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
           {/* Cancel Action */}
           <button
             onClick={onCancelScan}
+            data-testid="abort-diagnostic-scan"
+            aria-label="Abort diagnostic scan"
             className="btn-neon btn-neon-magenta py-3 font-semibold text-xs w-full"
           >
             <ShieldAlert size={14} />

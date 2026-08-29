@@ -59,6 +59,12 @@ This compiles TypeScript, compresses CSS/JS, and outputs ready-to-deploy static 
 
 ---
 
+## Runtime Maintenance
+
+For deterministic browser-automation readiness gates, structured console diagnostics, common incident triage, and runtime artifact-cleanup guidance, see the [Runtime Maintenance Playbook](docs/runtime-maintenance.md).
+
+---
+
 ## 🔬 Tech Stack
 
 - **Framework**: [React 19](https://react.dev/)

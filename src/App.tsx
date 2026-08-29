@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MedicalCanvas } from './components/MedicalCanvas';
 import { VitalsPanel } from './components/VitalsPanel';
 import { ScanFlow } from './components/ScanFlow';
 import { DiagnosticReport } from './components/DiagnosticReport';
 import { ShieldCheck, Cpu, Database } from 'lucide-react';
+import { createRuntimeCorrelationId, logRuntimeEvent } from './utils/runtimeDiagnostics';
 
 function App() {
   const [activeNode, setActiveNode] = useState<string | null>(null);
@@ -11,6 +12,14 @@ function App() {
   const [scanProgress, setScanProgress] = useState<number>(0);
   const [showReport, setShowReport] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<string>('');
+  const scanCorrelationId = useRef<string>(createRuntimeCorrelationId());
+
+  useEffect(() => {
+    logRuntimeEvent('application_ready', scanCorrelationId.current, {
+      checkpoint: 'app-mounted',
+      scanning: false,
+    });
+  }, []);
 
   // 1. Digital HUD clock updating every second
   useEffect(() => {
@@ -49,24 +58,44 @@ function App() {
   }, [isScanning]);
 
   const handleStartScan = () => {
+    scanCorrelationId.current = createRuntimeCorrelationId();
+    logRuntimeEvent('scan_started', scanCorrelationId.current, {
+      checkpoint: 'scan-start',
+      progress: 0,
+      selector: '[data-testid="start-diagnostic-scan"]',
+    });
     setIsScanning(true);
     setScanProgress(0);
     setShowReport(false);
   };
 
   const handleCancelScan = () => {
+    logRuntimeEvent('scan_cancelled', scanCorrelationId.current, {
+      checkpoint: 'scan-cancel',
+      progress: Math.round(scanProgress),
+      selector: '[data-testid="abort-diagnostic-scan"]',
+    });
     setIsScanning(false);
     setScanProgress(0);
     setActiveNode(null);
   };
 
   const handleScanComplete = () => {
+    logRuntimeEvent('scan_completed', scanCorrelationId.current, {
+      checkpoint: 'report-ready',
+      progress: 100,
+      selector: '[data-testid="diagnostic-report"]',
+    });
     setIsScanning(false);
     setShowReport(true);
     setActiveNode(null);
   };
 
   const handleReset = () => {
+    logRuntimeEvent('scan_reset', scanCorrelationId.current, {
+      checkpoint: 'report-reset',
+      selector: '[data-testid="reset-diagnostic-scan"]',
+    });
     setShowReport(false);
     setScanProgress(0);
     setActiveNode(null);
@@ -74,6 +103,11 @@ function App() {
 
   const handleSelectNode = (node: string) => {
     if (isScanning) return; // ignore during scanning sequence
+    logRuntimeEvent('scan_step_changed', scanCorrelationId.current, {
+      checkpoint: 'manual-node-selection',
+      node,
+      scanning: false,
+    });
     setActiveNode(prev => (prev === node ? null : node));
   };
 
@@ -145,7 +179,9 @@ function App() {
             onScanComplete={handleScanComplete}
           />
         ) : (
-          <DiagnosticReport onReset={handleReset} />
+          <div data-testid="diagnostic-report">
+            <DiagnosticReport onReset={handleReset} />
+          </div>
         )}
       </aside>
     </div>
