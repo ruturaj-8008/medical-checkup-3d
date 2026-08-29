@@ -1,69 +1,47 @@
-# Aura-3D Medical Checkup Portal
+# Today's Tasks
 
-A modern, highly interactive 3D Biometric Medical Checkup UI. Built using **React**, **TypeScript**, and **Three.js** (WebGL), featuring a futuristic dark glassmorphic medical HUD dashboard.
+A focused, local-first todo application built with React and TypeScript. Tasks are stored in the browser, so the app works without an account, server, or network connection.
 
-## 🚀 Features
+## Features
 
-- **3D Holographic Model Canvas**: Programmatically rendered rotating 3D DNA Double Helix using Three.js particles. Features interactive nodes representing organs (Cranial, Cardio, Pulmonary, Metabolic) that project responsive 2D glassmorphic tooltips in 3D coordinate space.
-- **Biometric Telemetry Panel**: Fluctuating vital metrics (Heart Rate, Blood Pressure, SpO2, Temperature, Respiration) showing slight real-time oscillations with scrolling EKG wave animations.
-- **Biometric Diagnostic Scanner**: Wizard workflow simulating a step-by-step full-body checkup scan, showing percentage tracking, active laser sweep bars, and real-time scrolling console terminal logs.
-- **Composite Health Report**: Dynamic summary display with an animated circular score meter, breakdown parameters, and actionable medical recommendations.
+- Add non-empty tasks from the keyboard or with the add button.
+- Mark tasks complete, edit their text, or delete them.
+- Filter tasks by all, active, or completed status.
+- Clear completed tasks and view active/completed counts.
+- Persist tasks in `localStorage` under the `todo-app.todos` key.
+- Safely recover to an empty list if saved browser data is invalid.
+- Use responsive layouts and visible keyboard focus styles on small and large screens.
 
----
-
-## 🛠️ Installation & Setup
-
-Follow these simple steps to install and run the application locally.
+## Run locally
 
 ### Prerequisites
 
-Ensure you have [Node.js](https://nodejs.org/) installed (v18.0.0 or higher is recommended) along with `npm` (Node Package Manager).
+Install a current Node.js release (Node 20.19+ is recommended for the included Vite toolchain).
 
-### 1. Clone or Open the Directory
-
-Open your command line interface (Terminal / Command Prompt / PowerShell) and navigate to the project directory:
+### Install and start
 
 ```bash
-cd C:\Users\rutur_zyan8vn\Desktop\medical-checkup-3d
-```
-
-### 2. Install Dependencies
-
-Install the required node packages (React, Three.js, TypeScript compiler, Lucide icons, Vite):
-
-```bash
+cd medical-checkup-3d
 npm install
-```
-
-### 3. Start Local Dev Server
-
-Launch the Vite local development server:
-
-```bash
 npm run dev
 ```
 
-The output will display the local URL (usually `http://localhost:5173`). Open this URL in your modern web browser to view the application.
+Vite displays the local development URL, usually `http://localhost:5173`.
 
----
-
-## 📦 Production Build
-
-To compile a highly optimized production bundle:
+## Quality commands
 
 ```bash
+npm run lint
 npm run build
 ```
 
-This compiles TypeScript, compresses CSS/JS, and outputs ready-to-deploy static assets into a `./dist` folder.
+`npm run build` checks TypeScript and produces an optimized static bundle in `dist/`.
 
----
+## Technology
 
-## 🔬 Tech Stack
-
-- **Framework**: [React 19](https://react.dev/)
-- **Build Tool**: [Vite 6](https://vite.dev/)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **3D Engine**: [Three.js](https://threejs.org/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Styling**: Vanilla CSS (Variables, Flexbox/Grid, Glassmorphic backdrop filters, custom animations)
+- React 19
+- TypeScript
+- Vite
+- Lucide React
+- Vanilla CSS
+- Browser localStorage for persistence

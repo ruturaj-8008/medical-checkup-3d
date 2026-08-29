@@ -1,154 +1,328 @@
-import { useState, useEffect } from 'react';
-import { MedicalCanvas } from './components/MedicalCanvas';
-import { VitalsPanel } from './components/VitalsPanel';
-import { ScanFlow } from './components/ScanFlow';
-import { DiagnosticReport } from './components/DiagnosticReport';
-import { ShieldCheck, Cpu, Database } from 'lucide-react';
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useState } from 'react';
+import { Check, ClipboardList, Pencil, Plus, Trash2, X } from 'lucide-react';
 
-function App() {
-  const [activeNode, setActiveNode] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState<boolean>(false);
-  const [scanProgress, setScanProgress] = useState<number>(0);
-  const [showReport, setShowReport] = useState<boolean>(false);
-  const [currentTime, setCurrentTime] = useState<string>('');
+type Filter = 'all' | 'active' | 'completed';
 
-  // 1. Digital HUD clock updating every second
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
-      const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.');
-      setCurrentTime(`${dateStr} // ${timeStr}`);
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
+interface Todo {
+  id: string;
+  text: string;
+  completed: boolean;
+  createdAt: number;
+}
 
-  // 2. Scan progress simulator
-  useEffect(() => {
-    let timer: number;
-    if (isScanning) {
-      const duration = 12000; // 12 seconds checkup scan
-      const intervalTime = 100;
-      const step = (100 / (duration / intervalTime));
+const STORAGE_KEY = 'todo-app.todos';
 
-      timer = window.setInterval(() => {
-        setScanProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(timer);
-            return 100;
-          }
-          return prev + step;
-        });
-      }, intervalTime);
+const filters: Array<{ id: Filter; label: string }> = [
+  { id: 'all', label: 'All' },
+  { id: 'active', label: 'Active' },
+  { id: 'completed', label: 'Completed' },
+];
+
+/**
+ * Returns true only for records that can safely be rendered as persisted todos.
+ */
+function isTodo(value: unknown): value is Todo {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.text === 'string' &&
+    candidate.text.trim().length > 0 &&
+    typeof candidate.completed === 'boolean' &&
+    typeof candidate.createdAt === 'number'
+  );
+}
+
+/**
+ * Loads valid todos from browser storage without allowing unavailable or corrupt storage to break rendering.
+ */
+function loadTodos(): Todo[] {
+  try {
+    const savedTodos = window.localStorage.getItem(STORAGE_KEY);
+
+    if (!savedTodos) {
+      return [];
     }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [isScanning]);
 
-  const handleStartScan = () => {
-    setIsScanning(true);
-    setScanProgress(0);
-    setShowReport(false);
+    const parsedTodos: unknown = JSON.parse(savedTodos);
+
+    if (!Array.isArray(parsedTodos) || !parsedTodos.every(isTodo)) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return [];
+    }
+
+    return parsedTodos;
+  } catch {
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Storage can be unavailable in privacy-restricted browser contexts.
+    }
+
+    return [];
+  }
+}
+
+// PUBLIC_INTERFACE
+function App() {
+  /** Renders a local-first task workspace with persistent todo management. */
+  const [todos, setTodos] = useState<Todo[]>(loadTodos);
+  const [filter, setFilter] = useState<Filter>('all');
+  const [newTodoText, setNewTodoText] = useState('');
+  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    } catch {
+      // The app remains fully usable for the current browser session if persistence is unavailable.
+    }
+  }, [todos]);
+
+  const visibleTodos = useMemo(
+    () =>
+      todos.filter((todo) => {
+        if (filter === 'active') {
+          return !todo.completed;
+        }
+
+        if (filter === 'completed') {
+          return todo.completed;
+        }
+
+        return true;
+      }),
+    [filter, todos],
+  );
+
+  const activeTodoCount = todos.filter((todo) => !todo.completed).length;
+  const completedTodoCount = todos.length - activeTodoCount;
+
+  const addTodo = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const trimmedText = newTodoText.trim();
+
+    if (!trimmedText) {
+      return;
+    }
+
+    setTodos((currentTodos) => [
+      {
+        id: crypto.randomUUID(),
+        text: trimmedText,
+        completed: false,
+        createdAt: Date.now(),
+      },
+      ...currentTodos,
+    ]);
+    setNewTodoText('');
   };
 
-  const handleCancelScan = () => {
-    setIsScanning(false);
-    setScanProgress(0);
-    setActiveNode(null);
+  const toggleTodo = (todoId: string) => {
+    setTodos((currentTodos) =>
+      currentTodos.map((todo) =>
+        todo.id === todoId ? { ...todo, completed: !todo.completed } : todo,
+      ),
+    );
   };
 
-  const handleScanComplete = () => {
-    setIsScanning(false);
-    setShowReport(true);
-    setActiveNode(null);
+  const deleteTodo = (todoId: string) => {
+    setTodos((currentTodos) => currentTodos.filter((todo) => todo.id !== todoId));
+
+    if (editingTodoId === todoId) {
+      setEditingTodoId(null);
+      setEditingText('');
+    }
   };
 
-  const handleReset = () => {
-    setShowReport(false);
-    setScanProgress(0);
-    setActiveNode(null);
+  const startEditing = (todo: Todo) => {
+    setEditingTodoId(todo.id);
+    setEditingText(todo.text);
   };
 
-  const handleSelectNode = (node: string) => {
-    if (isScanning) return; // ignore during scanning sequence
-    setActiveNode(prev => (prev === node ? null : node));
+  const cancelEditing = () => {
+    setEditingTodoId(null);
+    setEditingText('');
+  };
+
+  const saveEdit = (event: FormEvent<HTMLFormElement>, todoId: string) => {
+    event.preventDefault();
+
+    const trimmedText = editingText.trim();
+
+    if (!trimmedText) {
+      return;
+    }
+
+    setTodos((currentTodos) =>
+      currentTodos.map((todo) => (todo.id === todoId ? { ...todo, text: trimmedText } : todo)),
+    );
+    cancelEditing();
+  };
+
+  const handleEditKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      cancelEditing();
+    }
+  };
+
+  const clearCompleted = () => {
+    setTodos((currentTodos) => currentTodos.filter((todo) => !todo.completed));
   };
 
   return (
-    <div className="app-container">
-      {/* 1. Header HUD */}
-      <header className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20">
-        {/* Logo and system status */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-cyan rounded-full animate-pulse shadow-[0_0_8px_#00f0ff]" />
-            <h1 className="hud-title text-lg tracking-wider font-extrabold flex items-center gap-2">
-              AURA-3D <span className="text-xs font-semibold text-cyan hud-font bg-cyan/10 border border-cyan/25 px-2 py-0.5 rounded">V.6</span>
-            </h1>
+    <main className="todo-app">
+      <section className="todo-card" aria-labelledby="app-title">
+        <header className="app-header">
+          <div className="brand-mark" aria-hidden="true">
+            <Check size={22} strokeWidth={3} />
           </div>
-          <span className="text-[10px] text-text-muted font-mono tracking-widest hidden md:inline">
-            // HOLOGRAPHIC BIOSCAN PROTOCOL
-          </span>
-        </div>
-
-        {/* HUD Sub Stats Indicators */}
-        <div className="hidden lg:flex items-center gap-6 text-[10px] hud-font">
-          <div className="flex items-center gap-2 text-emerald">
-            <ShieldCheck size={14} />
-            <span>SECURE LINK</span>
+          <div>
+            <p className="eyebrow">Personal workspace</p>
+            <h1 id="app-title">Today&apos;s tasks</h1>
           </div>
-          <div className="flex items-center gap-2 text-cyan">
-            <Cpu size={14} className="animate-spin-slow" />
-            <span>AI CORE: ACTIVE</span>
-          </div>
-          <div className="flex items-center gap-2 text-text-secondary">
-            <Database size={14} />
-            <span>LOCAL MEMORY</span>
-          </div>
-        </div>
+          <p className="completion-summary" aria-label={`${completedTodoCount} completed tasks`}>
+            <strong>{completedTodoCount}</strong> completed
+          </p>
+        </header>
 
-        {/* Realtime clock */}
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold">
-            {currentTime || 'LOADING...'}
-          </span>
-        </div>
-      </header>
-
-      {/* 2. Left Side - Telemetry Vitals */}
-      <aside className="border-r border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
-        <VitalsPanel />
-      </aside>
-
-      {/* 3. Center - 3D Render Canvas */}
-      <main className="relative flex items-center justify-center overflow-hidden">
-        <MedicalCanvas
-          activeNode={activeNode}
-          onSelectNode={handleSelectNode}
-          scanProgress={scanProgress}
-          isScanning={isScanning}
-        />
-      </main>
-
-      {/* 4. Right Side - Scan Flow Wizard / Diagnostic Report */}
-      <aside className="border-l border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
-        {!showReport ? (
-          <ScanFlow
-            isScanning={isScanning}
-            scanProgress={scanProgress}
-            onStartScan={handleStartScan}
-            onCancelScan={handleCancelScan}
-            onStepChange={setActiveNode}
-            onScanComplete={handleScanComplete}
+        <form className="add-todo-form" onSubmit={addTodo}>
+          <label className="sr-only" htmlFor="new-todo">
+            Add a task
+          </label>
+          <input
+            id="new-todo"
+            value={newTodoText}
+            onChange={(event) => setNewTodoText(event.target.value)}
+            placeholder="What needs to get done?"
+            autoComplete="off"
           />
-        ) : (
-          <DiagnosticReport onReset={handleReset} />
-        )}
-      </aside>
-    </div>
+          <button className="add-button" type="submit">
+            <Plus size={20} aria-hidden="true" />
+            Add task
+          </button>
+        </form>
+
+        <nav className="filter-bar" aria-label="Filter tasks">
+          {filters.map(({ id, label }) => {
+            const count =
+              id === 'all' ? todos.length : id === 'active' ? activeTodoCount : completedTodoCount;
+
+            return (
+              <button
+                className={`filter-button ${filter === id ? 'is-active' : ''}`}
+                type="button"
+                key={id}
+                aria-pressed={filter === id}
+                onClick={() => setFilter(id)}
+              >
+                {label}
+                <span aria-hidden="true">{count}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <section className="todo-list-section" aria-live="polite">
+          {visibleTodos.length === 0 ? (
+            <div className="empty-state">
+              <ClipboardList size={38} aria-hidden="true" />
+              <h2>{todos.length === 0 ? 'Your list is clear' : `No ${filter} tasks`}</h2>
+              <p>
+                {todos.length === 0
+                  ? 'Add a task above to start shaping your day.'
+                  : 'Try another filter to see the rest of your tasks.'}
+              </p>
+            </div>
+          ) : (
+            <ul className="todo-list" aria-label={`${filter} tasks`}>
+              {visibleTodos.map((todo) => (
+                <li className={`todo-item ${todo.completed ? 'is-completed' : ''}`} key={todo.id}>
+                  {editingTodoId === todo.id ? (
+                    <form className="edit-form" onSubmit={(event) => saveEdit(event, todo.id)}>
+                      <label className="sr-only" htmlFor={`edit-${todo.id}`}>
+                        Edit task
+                      </label>
+                      <input
+                        id={`edit-${todo.id}`}
+                        value={editingText}
+                        onChange={(event) => setEditingText(event.target.value)}
+                        onKeyDown={handleEditKeyDown}
+                        autoFocus
+                      />
+                      <button className="icon-button save-button" type="submit" aria-label="Save task">
+                        <Check size={18} aria-hidden="true" />
+                      </button>
+                      <button
+                        className="icon-button"
+                        type="button"
+                        onClick={cancelEditing}
+                        aria-label="Cancel editing"
+                      >
+                        <X size={18} aria-hidden="true" />
+                      </button>
+                    </form>
+                  ) : (
+                    <>
+                      <label className="todo-toggle">
+                        <input
+                          type="checkbox"
+                          checked={todo.completed}
+                          onChange={() => toggleTodo(todo.id)}
+                          aria-label={`Mark "${todo.text}" as ${todo.completed ? 'active' : 'complete'}`}
+                        />
+                        <span aria-hidden="true">
+                          <Check size={14} strokeWidth={3} />
+                        </span>
+                      </label>
+                      <p className="todo-text">{todo.text}</p>
+                      <div className="todo-actions">
+                        <button
+                          className="icon-button"
+                          type="button"
+                          onClick={() => startEditing(todo)}
+                          aria-label={`Edit "${todo.text}"`}
+                        >
+                          <Pencil size={17} aria-hidden="true" />
+                        </button>
+                        <button
+                          className="icon-button delete-button"
+                          type="button"
+                          onClick={() => deleteTodo(todo.id)}
+                          aria-label={`Delete "${todo.text}"`}
+                        >
+                          <Trash2 size={17} aria-hidden="true" />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <footer className="list-footer">
+          <p>
+            <strong>{activeTodoCount}</strong> {activeTodoCount === 1 ? 'task' : 'tasks'} remaining
+          </p>
+          <button
+            className="clear-button"
+            type="button"
+            onClick={clearCompleted}
+            disabled={completedTodoCount === 0}
+          >
+            Clear completed
+          </button>
+        </footer>
+      </section>
+    </main>
   );
 }
 
