@@ -3,7 +3,7 @@ import { MedicalCanvas } from './components/MedicalCanvas';
 import { VitalsPanel } from './components/VitalsPanel';
 import { ScanFlow } from './components/ScanFlow';
 import { DiagnosticReport } from './components/DiagnosticReport';
-import { ShieldCheck, Cpu, Database } from 'lucide-react';
+import { Activity, Cpu, Database, ShieldCheck } from 'lucide-react';
 
 function App() {
   const [activeNode, setActiveNode] = useState<string | null>(null);
@@ -79,62 +79,69 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* 1. Header HUD */}
-      <header className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20">
-        {/* Logo and system status */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-cyan rounded-full animate-pulse shadow-[0_0_8px_#00f0ff]" />
-            <h1 className="hud-title text-lg tracking-wider font-extrabold flex items-center gap-2">
-              AURA-3D <span className="text-xs font-semibold text-cyan hud-font bg-cyan/10 border border-cyan/25 px-2 py-0.5 rounded">V.6</span>
-            </h1>
+      <header className="dashboard-header">
+        <div className="brand-cluster">
+          <div className="brand-mark" aria-hidden="true">
+            <Activity size={20} strokeWidth={2.5} />
           </div>
-          <span className="text-[10px] text-text-muted font-mono tracking-widest hidden md:inline">
-            // HOLOGRAPHIC BIOSCAN PROTOCOL
-          </span>
-        </div>
-
-        {/* HUD Sub Stats Indicators */}
-        <div className="hidden lg:flex items-center gap-6 text-[10px] hud-font">
-          <div className="flex items-center gap-2 text-emerald">
-            <ShieldCheck size={14} />
-            <span>SECURE LINK</span>
-          </div>
-          <div className="flex items-center gap-2 text-cyan">
-            <Cpu size={14} className="animate-spin-slow" />
-            <span>AI CORE: ACTIVE</span>
-          </div>
-          <div className="flex items-center gap-2 text-text-secondary">
-            <Database size={14} />
-            <span>LOCAL MEMORY</span>
+          <div>
+            <div className="brand-title-row">
+              <h1 className="brand-title">AURA</h1>
+              <span className="version-badge">3D</span>
+            </div>
+            <p className="brand-subtitle">Advanced wellness intelligence</p>
           </div>
         </div>
 
-        {/* Realtime clock */}
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold">
+        <div className="system-statuses" aria-label="System status">
+          <div className="system-status secure-status">
+            <ShieldCheck size={14} aria-hidden="true" />
+            <span>Secure session</span>
+          </div>
+          <div className="system-status core-status">
+            <Cpu size={14} aria-hidden="true" />
+            <span>Analysis engine active</span>
+          </div>
+          <div className="system-status storage-status">
+            <Database size={14} aria-hidden="true" />
+            <span>Private workspace</span>
+          </div>
+        </div>
+
+        <div className="session-clock">
+          <span className="session-clock-label">Local time</span>
+          <span className="session-clock-value">
             {currentTime || 'LOADING...'}
           </span>
         </div>
       </header>
 
-      {/* 2. Left Side - Telemetry Vitals */}
-      <aside className="border-r border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
+      <aside className="dashboard-sidebar telemetry-sidebar" aria-label="Live vital signs">
         <VitalsPanel />
       </aside>
 
-      {/* 3. Center - 3D Render Canvas */}
-      <main className="relative flex items-center justify-center overflow-hidden">
-        <MedicalCanvas
-          activeNode={activeNode}
-          onSelectNode={handleSelectNode}
-          scanProgress={scanProgress}
-          isScanning={isScanning}
-        />
+      <main className="visualization-workspace">
+        <div className="workspace-heading">
+          <div>
+            <p className="eyebrow">Live visualization</p>
+            <h2>Whole-body health map</h2>
+          </div>
+          <div className="workspace-live-state">
+            <span className="live-indicator" />
+            {isScanning ? `Scan in progress · ${Math.round(scanProgress)}%` : 'Ready for assessment'}
+          </div>
+        </div>
+        <div className="canvas-frame">
+          <MedicalCanvas
+            activeNode={activeNode}
+            onSelectNode={handleSelectNode}
+            scanProgress={scanProgress}
+            isScanning={isScanning}
+          />
+        </div>
       </main>
 
-      {/* 4. Right Side - Scan Flow Wizard / Diagnostic Report */}
-      <aside className="border-l border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
+      <aside className="dashboard-sidebar control-sidebar" aria-label="Diagnostic controls">
         {!showReport ? (
           <ScanFlow
             isScanning={isScanning}
