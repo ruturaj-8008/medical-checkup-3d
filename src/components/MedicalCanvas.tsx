@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { logRuntimeEvent } from '../utils/runtimeDiagnostics';
 
 interface MedicalCanvasProps {
   activeNode: string | null;
@@ -37,6 +38,11 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const dnaGroupRef = useRef<THREE.Group | null>(null);
   const scanRingRef = useRef<THREE.Mesh | null>(null);
+  const scanStateRef = useRef({ isScanning, scanProgress });
+
+  useEffect(() => {
+    scanStateRef.current = { isScanning, scanProgress };
+  }, [isScanning, scanProgress]);
 
   useEffect(() => {
     if (!canvasRef.current || !mountRef.current) return;
@@ -61,6 +67,12 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     rendererRef.current = renderer;
+    logRuntimeEvent('canvas.renderer_initialized', {
+      phase: 'webgl-lifecycle',
+      width,
+      height,
+      pixelRatio: renderer.getPixelRatio(),
+    });
 
     // 4. Create 3D DNA Helix Particle System
     const dnaGroup = new THREE.Group();
@@ -217,7 +229,7 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
       // Rotate DNA Helix
       if (dnaGroup) {
         // Spin speed depends on scanning status
-        const rotSpeed = isScanning ? 0.8 : 0.25;
+        const rotSpeed = scanStateRef.current.isScanning ? 0.8 : 0.25;
         dnaGroup.rotation.y = elapsedTime * rotSpeed;
         
         // Soft floating/wobbling effect
@@ -226,10 +238,10 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
 
       // Animate Scan Ring height
       if (scanRing) {
-        if (isScanning) {
+        if (scanStateRef.current.isScanning) {
           scanRing.visible = true;
           // Map progress 0-100 to y position -2.8 to 2.8
-          const progressRatio = scanProgress / 100;
+          const progressRatio = scanStateRef.current.scanProgress / 100;
           scanRing.position.y = -2.8 + progressRatio * 5.6;
           
           // Speed pulsing color
@@ -284,10 +296,32 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+      if (requestRef.current !== null) cancelAnimationFrame(requestRef.current);
+      scene.traverse((object) => {
+        const renderable = object as THREE.Mesh | THREE.Points | THREE.Line;
+        renderable.geometry?.dispose();
+
+        const materials = Array.isArray(renderable.material)
+          ? renderable.material
+          : [renderable.material];
+        materials.filter(Boolean).forEach((material) => {
+          Object.values(material).forEach((value) => {
+            if (value instanceof THREE.Texture) value.dispose();
+          });
+          material.dispose();
+        });
+      });
       renderer.dispose();
+      renderer.forceContextLoss();
+      scene.clear();
+      rendererRef.current = null;
+      dnaGroupRef.current = null;
+      scanRingRef.current = null;
+      logRuntimeEvent('canvas.renderer_disposed', {
+        phase: 'webgl-lifecycle',
+      });
     };
-  }, [isScanning, scanProgress]);
+  }, []);
 
   // Handle manual interaction mouse effects
   const handleMouseMove = (e: React.MouseEvent) => {

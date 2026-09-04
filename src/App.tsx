@@ -4,6 +4,7 @@ import { VitalsPanel } from './components/VitalsPanel';
 import { ScanFlow } from './components/ScanFlow';
 import { DiagnosticReport } from './components/DiagnosticReport';
 import { ShieldCheck, Cpu, Database } from 'lucide-react';
+import { logRuntimeEvent } from './utils/runtimeDiagnostics';
 
 function App() {
   const [activeNode, setActiveNode] = useState<string | null>(null);
@@ -39,41 +40,71 @@ function App() {
             clearInterval(timer);
             return 100;
           }
-          return prev + step;
+          return Math.min(prev + step, 100);
         });
       }, intervalTime);
     }
     return () => {
-      if (timer) clearInterval(timer);
+      window.clearInterval(timer);
     };
   }, [isScanning]);
 
   const handleStartScan = () => {
+    logRuntimeEvent('scan.started', {
+      phase: 'scan-lifecycle',
+      previousProgress: scanProgress,
+      reportVisible: showReport,
+    });
     setIsScanning(true);
     setScanProgress(0);
     setShowReport(false);
   };
 
   const handleCancelScan = () => {
+    logRuntimeEvent('scan.cancelled', {
+      phase: 'scan-lifecycle',
+      progress: Math.round(scanProgress),
+    });
     setIsScanning(false);
     setScanProgress(0);
     setActiveNode(null);
   };
 
   const handleScanComplete = () => {
+    logRuntimeEvent('scan.completed', {
+      phase: 'scan-lifecycle',
+      progress: Math.round(scanProgress),
+    });
     setIsScanning(false);
     setShowReport(true);
     setActiveNode(null);
   };
 
   const handleReset = () => {
+    logRuntimeEvent('scan.reset', {
+      phase: 'scan-lifecycle',
+      reportVisible: showReport,
+    });
     setShowReport(false);
     setScanProgress(0);
     setActiveNode(null);
   };
 
   const handleSelectNode = (node: string) => {
-    if (isScanning) return; // ignore during scanning sequence
+    if (isScanning) {
+      logRuntimeEvent('node.selection_ignored', {
+        phase: 'node-interaction',
+        node,
+        reason: 'scan_in_progress',
+      });
+      return;
+    }
+
+    logRuntimeEvent('node.selected', {
+      phase: 'node-interaction',
+      node,
+      wasActive: activeNode === node,
+    });
     setActiveNode(prev => (prev === node ? null : node));
   };
 

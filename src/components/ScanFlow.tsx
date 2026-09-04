@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Scan, ShieldAlert, Cpu, Play } from 'lucide-react';
+import { logRuntimeEvent } from '../utils/runtimeDiagnostics';
 
 interface ScanFlowProps {
   isScanning: boolean;
@@ -29,6 +30,7 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1);
   const [logConsole, setLogConsole] = useState<string[]>(['[SYS] Biometric System initialized. Ready to scan...']);
   const terminalEndRef = useRef<HTMLDivElement>(null);
+  const completionScheduledRef = useRef(false);
 
   const steps: ScanStep[] = [
     {
@@ -90,6 +92,7 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
   useEffect(() => {
     if (!isScanning) {
       setCurrentStepIndex(-1);
+      completionScheduledRef.current = false;
       return;
     }
 
@@ -102,7 +105,15 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
     if (newStepIdx !== currentStepIndex) {
       setCurrentStepIndex(newStepIdx);
       const step = steps[newStepIdx];
-      
+
+      logRuntimeEvent('scan.step_changed', {
+        phase: 'scan-flow',
+        stepId: step.id,
+        stepName: step.name,
+        progress: Math.round(scanProgress),
+        logCount: logConsole.length,
+      });
+
       // Update active 3D node callback
       onStepChange(step.nodeKey);
       
@@ -126,8 +137,15 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
     }
 
     // Trigger complete
-    if (scanProgress >= 100) {
+    if (scanProgress >= 100 && !completionScheduledRef.current) {
+      completionScheduledRef.current = true;
       setLogConsole(prev => [...prev, '[SYS] ALL DIAGNOSTIC CHECKS COMPLETE. COMPILING REPORT...']);
+      logRuntimeEvent('scan.completion_scheduled', {
+        phase: 'scan-flow',
+        progress: Math.round(scanProgress),
+        completionDelayMs: 1000,
+        logCount: logConsole.length,
+      });
       const timer = setTimeout(() => {
         onScanComplete();
       }, 1000);
@@ -137,6 +155,11 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
   }, [scanProgress, isScanning, currentStepIndex]);
 
   const handleStart = () => {
+    logRuntimeEvent('scan.start_requested', {
+      phase: 'scan-flow',
+      progress: Math.round(scanProgress),
+      availableSteps: steps.length,
+    });
     setLogConsole(['[SYS] Core initialized.', '[SYS] Aligning 3D scanning lasers...']);
     onStartScan();
   };
