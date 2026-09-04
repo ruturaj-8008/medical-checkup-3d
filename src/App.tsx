@@ -3,6 +3,7 @@ import { MedicalCanvas } from './components/MedicalCanvas';
 import { VitalsPanel } from './components/VitalsPanel';
 import { ScanFlow } from './components/ScanFlow';
 import { DiagnosticReport } from './components/DiagnosticReport';
+import { logRuntimeDiagnostic } from './runtimeDiagnostics';
 import { ShieldCheck, Cpu, Database } from 'lucide-react';
 
 function App() {
@@ -49,36 +50,68 @@ function App() {
   }, [isScanning]);
 
   const handleStartScan = () => {
+    logRuntimeDiagnostic('scan.start.requested', {
+      checkpoint: 'scan-controller',
+      progress: scanProgress,
+      reportVisible: showReport,
+    });
     setIsScanning(true);
     setScanProgress(0);
     setShowReport(false);
   };
 
   const handleCancelScan = () => {
+    logRuntimeDiagnostic('scan.cancelled', {
+      checkpoint: 'scan-controller',
+      progress: Math.round(scanProgress),
+    });
     setIsScanning(false);
     setScanProgress(0);
     setActiveNode(null);
   };
 
   const handleScanComplete = () => {
+    logRuntimeDiagnostic('scan.completed', {
+      checkpoint: 'scan-complete',
+      progress: Math.round(scanProgress),
+    });
     setIsScanning(false);
     setShowReport(true);
     setActiveNode(null);
   };
 
   const handleReset = () => {
+    logRuntimeDiagnostic('report.reset.requested', {
+      checkpoint: 'diagnostic-report',
+      reportVisible: showReport,
+    });
     setShowReport(false);
     setScanProgress(0);
     setActiveNode(null);
   };
 
   const handleSelectNode = (node: string) => {
-    if (isScanning) return; // ignore during scanning sequence
+    if (isScanning) {
+      logRuntimeDiagnostic('node.selection.ignored', {
+        checkpoint: 'medical-canvas',
+        node,
+        reason: 'scan-in-progress',
+      });
+      return;
+    }
+    logRuntimeDiagnostic('node.selection.changed', {
+      checkpoint: 'medical-canvas',
+      node,
+    });
     setActiveNode(prev => (prev === node ? null : node));
   };
 
   return (
-    <div className="app-container">
+    <div
+      className="app-container"
+      data-testid="medical-checkup-app"
+      data-runtime-state={showReport ? 'report' : isScanning ? 'scanning' : 'ready'}
+    >
       {/* 1. Header HUD */}
       <header className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20">
         {/* Logo and system status */}

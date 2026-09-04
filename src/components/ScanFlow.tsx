@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Scan, ShieldAlert, Cpu, Play } from 'lucide-react';
+import { logRuntimeDiagnostic } from '../runtimeDiagnostics';
 
 interface ScanFlowProps {
   isScanning: boolean;
@@ -102,10 +103,16 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
     if (newStepIdx !== currentStepIndex) {
       setCurrentStepIndex(newStepIdx);
       const step = steps[newStepIdx];
-      
+
+      logRuntimeDiagnostic('scan.step.changed', {
+        checkpoint: step.id,
+        stepName: step.name,
+        progress: Math.round(scanProgress),
+      });
+
       // Update active 3D node callback
       onStepChange(step.nodeKey);
-      
+
       // Post system announcement log
       setLogConsole(prev => [
         ...prev,
@@ -128,6 +135,11 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
     // Trigger complete
     if (scanProgress >= 100) {
       setLogConsole(prev => [...prev, '[SYS] ALL DIAGNOSTIC CHECKS COMPLETE. COMPILING REPORT...']);
+      logRuntimeDiagnostic('scan.completion.queued', {
+        checkpoint: 'report-transition',
+        progress: Math.round(scanProgress),
+        completionDelayMs: 1000,
+      });
       const timer = setTimeout(() => {
         onScanComplete();
       }, 1000);
@@ -137,12 +149,21 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
   }, [scanProgress, isScanning, currentStepIndex]);
 
   const handleStart = () => {
+    logRuntimeDiagnostic('scan.start.clicked', {
+      checkpoint: 'scan-controller',
+      selector: '[data-testid="start-diagnostic-scan"]',
+      matchingElements: 1,
+    });
     setLogConsole(['[SYS] Core initialized.', '[SYS] Aligning 3D scanning lasers...']);
     onStartScan();
   };
 
   return (
-    <div className="flex flex-col h-full gap-4 p-4 select-none">
+    <div
+      className="flex flex-col h-full gap-4 p-4 select-none"
+      data-testid="scan-flow"
+      data-scan-state={isScanning ? 'scanning' : 'ready'}
+    >
       {/* HUD Header */}
       <div className="flex flex-col gap-1 border-b border-white/5 pb-3">
         <span className="text-[10px] text-cyan hud-font font-bold tracking-widest uppercase">
@@ -189,6 +210,7 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
           {/* Action Trigger */}
           <button
             onClick={handleStart}
+            data-testid="start-diagnostic-scan"
             className="btn-neon btn-neon-cyan pulsing-hud-cyan py-4 font-bold text-sm w-full"
           >
             <Play size={16} />
@@ -200,7 +222,12 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
         <div className="flex flex-col flex-1 gap-4 justify-between">
           <div className="flex flex-col gap-3">
             {/* Scanning Indicator Panel */}
-            <div className="glass-panel p-4 flex flex-col gap-3 pulsing-hud-cyan bg-black/35 relative overflow-hidden">
+            <div
+              className="glass-panel p-4 flex flex-col gap-3 pulsing-hud-cyan bg-black/35 relative overflow-hidden"
+              data-testid="scan-progress"
+              aria-live="polite"
+              aria-label={`Diagnostic scan progress: ${Math.round(scanProgress)} percent`}
+            >
               <div className="scan-line" />
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
@@ -236,7 +263,12 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
             {/* Diagnostic Console Terminal Output */}
             <div className="flex flex-col gap-2">
               <span className="text-[9px] text-text-muted font-bold uppercase tracking-widest px-1">Diagnostic Log Output</span>
-              <div className="h-44 bg-black/60 border border-white/5 rounded-lg p-3 font-mono text-[9px] text-emerald leading-relaxed overflow-y-auto flex flex-col gap-1.5 shadow-inner">
+              <div
+                className="h-44 bg-black/60 border border-white/5 rounded-lg p-3 font-mono text-[9px] text-emerald leading-relaxed overflow-y-auto flex flex-col gap-1.5 shadow-inner"
+                data-testid="scan-log"
+                role="log"
+                aria-live="polite"
+              >
                 {logConsole.map((log, index) => {
                   const isSys = log.startsWith('[SYS]');
                   return (
@@ -253,6 +285,7 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
           {/* Cancel Action */}
           <button
             onClick={onCancelScan}
+            data-testid="abort-diagnostic-scan"
             className="btn-neon btn-neon-magenta py-3 font-semibold text-xs w-full"
           >
             <ShieldAlert size={14} />

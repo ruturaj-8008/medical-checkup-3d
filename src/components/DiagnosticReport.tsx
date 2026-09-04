@@ -52,7 +52,12 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
   const strokeDashoffset = circumference - (overallScore / 100) * circumference;
 
   return (
-    <div className="flex flex-col h-full gap-4 p-4 select-none overflow-y-auto">
+    <div
+      className="flex flex-col h-full gap-4 p-4 select-none overflow-y-auto"
+      data-testid="diagnostic-report"
+      aria-live="polite"
+      aria-label="Diagnostic report ready"
+    >
       {/* HUD Header */}
       <div className="flex flex-col gap-1 border-b border-white/5 pb-3">
         <span className="text-[10px] text-magenta hud-font font-bold tracking-widest uppercase">
@@ -175,6 +180,7 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
       {/* Action Trigger - Reset & Rescan */}
       <button
         onClick={onReset}
+        data-testid="reset-telemetry-rescan"
         className="btn-neon btn-neon-magenta mt-2 py-3.5 font-bold text-xs w-full flex items-center justify-center gap-2"
       >
         <RefreshCw size={13} className="animate-spin-slow" />
