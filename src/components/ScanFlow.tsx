@@ -142,13 +142,13 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full gap-4 p-4 select-none">
+    <section className="flex flex-col h-full gap-4 p-4 select-none" aria-labelledby="scan-flow-heading">
       {/* HUD Header */}
       <div className="flex flex-col gap-1 border-b border-white/5 pb-3">
         <span className="text-[10px] text-cyan hud-font font-bold tracking-widest uppercase">
           // Diagnostic Controller
         </span>
-        <h2 className="hud-title text-xl">Checkup Scanner</h2>
+        <h2 id="scan-flow-heading" className="hud-title text-xl">Checkup Scanner</h2>
       </div>
 
       {/* Controller Body */}
@@ -188,8 +188,10 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
 
           {/* Action Trigger */}
           <button
+            type="button"
             onClick={handleStart}
             className="btn-neon btn-neon-cyan pulsing-hud-cyan py-4 font-bold text-sm w-full"
+            aria-label="Initialize diagnostic scan"
           >
             <Play size={16} />
             Initialize Diagnostic Scan
@@ -201,7 +203,7 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
           <div className="flex flex-col gap-3">
             {/* Scanning Indicator Panel */}
             <div className="glass-panel p-4 flex flex-col gap-3 pulsing-hud-cyan bg-black/35 relative overflow-hidden">
-              <div className="scan-line" />
+              <div className="scan-line" aria-hidden="true" />
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
                   <Scan size={18} className="text-cyan animate-spin" />
@@ -215,7 +217,15 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
               </div>
 
               {/* Progress Slider Bar */}
-              <div className="w-full h-1.5 bg-white/5 border border-white/5 rounded-full overflow-hidden">
+              <div
+                className="w-full h-1.5 bg-white/5 border border-white/5 rounded-full overflow-hidden"
+                role="progressbar"
+                aria-label="Diagnostic scan progress"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(scanProgress)}
+                aria-valuetext={`${Math.round(scanProgress)} percent complete`}
+              >
                 <div 
                   className="h-full bg-gradient-to-r from-cyan to-magenta transition-all duration-100" 
                   style={{ width: `${scanProgress}%` }}
@@ -236,7 +246,13 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
             {/* Diagnostic Console Terminal Output */}
             <div className="flex flex-col gap-2">
               <span className="text-[9px] text-text-muted font-bold uppercase tracking-widest px-1">Diagnostic Log Output</span>
-              <div className="h-44 bg-black/60 border border-white/5 rounded-lg p-3 font-mono text-[9px] text-emerald leading-relaxed overflow-y-auto flex flex-col gap-1.5 shadow-inner">
+              <div
+                className="h-44 bg-black/60 border border-white/5 rounded-lg p-3 font-mono text-[9px] text-emerald leading-relaxed overflow-y-auto flex flex-col gap-1.5 shadow-inner"
+                role="log"
+                aria-label="Diagnostic log output"
+                aria-live="polite"
+                aria-relevant="additions"
+              >
                 {logConsole.map((log, index) => {
                   const isSys = log.startsWith('[SYS]');
                   return (
@@ -252,14 +268,16 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
 
           {/* Cancel Action */}
           <button
+            type="button"
             onClick={onCancelScan}
             className="btn-neon btn-neon-magenta py-3 font-semibold text-xs w-full"
+            aria-label="Abort the diagnostic scan"
           >
             <ShieldAlert size={14} />
             Abort Diagnostics
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 };

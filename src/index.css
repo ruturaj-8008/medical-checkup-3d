@@ -27,8 +27,8 @@
   --border-cyan: rgba(0, 240, 255, 0.2);
   --border-white: rgba(255, 255, 255, 0.08);
   --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-secondary: #cbd5e1;
+  --text-muted: #a8b6c9;
   
   /* Layout */
   --header-height: 70px;
@@ -46,7 +46,22 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  user-select: none;
+}
+
+button,
+[tabindex]:not([tabindex="-1"]) {
+  outline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-cyan);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(0, 240, 255, 0.28);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 body {
@@ -210,11 +225,21 @@ body {
   text-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
 }
 
+.btn-neon-cyan:focus-visible {
+  background: rgba(0, 240, 255, 0.14);
+  border-color: var(--color-cyan);
+}
+
 .btn-neon-magenta:hover {
   background: rgba(255, 42, 95, 0.1);
   border-color: var(--color-magenta);
   box-shadow: var(--glow-magenta);
   text-shadow: 0 0 5px rgba(255, 42, 95, 0.5);
+}
+
+.btn-neon-magenta:focus-visible {
+  background: rgba(255, 42, 95, 0.14);
+  border-color: var(--color-magenta);
 }
 
 .btn-neon-emerald:hover {
@@ -370,6 +395,29 @@ body {
   background: var(--color-magenta-glow);
   color: var(--color-magenta);
   border: 1px solid rgba(255, 42, 95, 0.1);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ==========================================================================

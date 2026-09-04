@@ -52,13 +52,13 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
   const strokeDashoffset = circumference - (overallScore / 100) * circumference;
 
   return (
-    <div className="flex flex-col h-full gap-4 p-4 select-none overflow-y-auto">
+    <section className="flex flex-col h-full gap-4 p-4 select-none overflow-y-auto" aria-labelledby="report-heading">
       {/* HUD Header */}
       <div className="flex flex-col gap-1 border-b border-white/5 pb-3">
         <span className="text-[10px] text-magenta hud-font font-bold tracking-widest uppercase">
           // Diagnostic Output
         </span>
-        <h2 className="hud-title text-xl">Health Assessment</h2>
+        <h2 id="report-heading" className="hud-title text-xl">Health Assessment</h2>
       </div>
 
       {/* Circular Progress Score Card */}
@@ -73,8 +73,12 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
         </div>
 
         {/* Circular SVG Ring */}
-        <div className="relative w-28 h-28 flex items-center justify-center">
-          <svg className="w-full h-full transform -rotate-90">
+        <div
+          className="relative w-28 h-28 flex items-center justify-center"
+          role="img"
+          aria-label={`Overall bio-safety rating: ${overallScore} out of 100`}
+        >
+          <svg className="w-full h-full transform -rotate-90" aria-hidden="true">
             {/* Background Ring */}
             <circle
               cx="56"
@@ -111,10 +115,11 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
       {/* Diagnosis Categories */}
       <div className="flex flex-col gap-2.5">
         <span className="text-[9px] text-text-muted font-bold uppercase tracking-widest px-1">Detailed Parameter Scores</span>
-        {scoreData.map((item, idx) => {
+        <ul className="flex flex-col gap-2.5" aria-label="Detailed parameter scores">
+        {scoreData.map((item) => {
           const isExc = item.status === 'excellent';
           return (
-            <div key={idx} className="glass-panel p-3 flex flex-col gap-2 hover:bg-white/[0.01]">
+            <li key={item.name} className="glass-panel p-3 flex flex-col gap-2 hover:bg-white/[0.01]">
               <div className="flex justify-between items-center">
                 <span className="text-xs font-semibold text-text-primary flex items-center gap-2">
                   {item.icon}
@@ -129,7 +134,14 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
               
               {/* Micro Progress Bar */}
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden"
+                  role="progressbar"
+                  aria-label={`${item.name} score`}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={item.score}
+                >
                   <div 
                     className="h-full rounded-full transition-all duration-1000 ease-out"
                     style={{ 
@@ -142,9 +154,10 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
                   {item.score}%
                 </span>
               </div>
-            </div>
+            </li>
           );
         })}
+        </ul>
       </div>
 
       {/* Recommendations & Actionable Insights */}
@@ -174,12 +187,14 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
 
       {/* Action Trigger - Reset & Rescan */}
       <button
+        type="button"
         onClick={onReset}
         className="btn-neon btn-neon-magenta mt-2 py-3.5 font-bold text-xs w-full flex items-center justify-center gap-2"
+        aria-label="Reset telemetry and start another diagnostic scan"
       >
         <RefreshCw size={13} className="animate-spin-slow" />
         Reset Telemetry & Rescan
       </button>
-    </div>
+    </section>
   );
 };

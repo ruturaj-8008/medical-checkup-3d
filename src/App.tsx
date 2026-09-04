@@ -80,11 +80,17 @@ function App() {
   return (
     <div className="app-container">
       {/* 1. Header HUD */}
-      <header className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20">
+      <header
+        className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20"
+        aria-label="AURA-3D system status"
+      >
         {/* Logo and system status */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-cyan rounded-full animate-pulse shadow-[0_0_8px_#00f0ff]" />
+            <span
+              className="w-3 h-3 bg-cyan rounded-full animate-pulse shadow-[0_0_8px_#00f0ff]"
+              aria-hidden="true"
+            />
             <h1 className="hud-title text-lg tracking-wider font-extrabold flex items-center gap-2">
               AURA-3D <span className="text-xs font-semibold text-cyan hud-font bg-cyan/10 border border-cyan/25 px-2 py-0.5 rounded">V.6</span>
             </h1>
@@ -112,19 +118,22 @@ function App() {
 
         {/* Realtime clock */}
         <div className="flex items-center gap-3">
-          <span className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold">
+          <span
+            className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold"
+            aria-label={`Current system time: ${currentTime || 'loading'}`}
+          >
             {currentTime || 'LOADING...'}
           </span>
         </div>
       </header>
 
       {/* 2. Left Side - Telemetry Vitals */}
-      <aside className="border-r border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
+      <aside className="border-r border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden" aria-label="Live biometric telemetry">
         <VitalsPanel />
       </aside>
 
       {/* 3. Center - 3D Render Canvas */}
-      <main className="relative flex items-center justify-center overflow-hidden">
+      <main className="relative flex items-center justify-center overflow-hidden" aria-label="Interactive diagnostic visualization">
         <MedicalCanvas
           activeNode={activeNode}
           onSelectNode={handleSelectNode}
@@ -134,7 +143,7 @@ function App() {
       </main>
 
       {/* 4. Right Side - Scan Flow Wizard / Diagnostic Report */}
-      <aside className="border-l border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
+      <aside className="border-l border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden" aria-label="Diagnostic scan controls and results">
         {!showReport ? (
           <ScanFlow
             isScanning={isScanning}
@@ -148,6 +157,13 @@ function App() {
           <DiagnosticReport onReset={handleReset} />
         )}
       </aside>
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {showReport
+          ? 'Diagnostic report ready.'
+          : isScanning
+            ? `Diagnostic scan in progress: ${Math.round(scanProgress)} percent complete.`
+            : 'Diagnostic scanner ready.'}
+      </div>
     </div>
   );
 }
