@@ -436,24 +436,58 @@ body {
   }
 }
 
-/* Mobile Devices (max-width: 768px) */
-@media (max-width: 768px) {
+/* Mobile Devices (below 768px) */
+@media (max-width: 767.98px) {
+  :root {
+    --header-height: 64px;
+  }
+
   .app-container {
     grid-template-columns: 1fr;
-    grid-template-rows: var(--header-height) 320px auto auto;
+    grid-template-rows: var(--header-height) clamp(280px, 45svh, 380px) auto auto;
+    min-width: 0;
   }
 
   header.col-span-3 {
     grid-column: span 1;
+    padding: 0 12px !important;
+    gap: 8px;
+  }
+
+  header.col-span-3 > div:first-child {
+    gap: 8px;
+    min-width: 0;
+  }
+
+  header.col-span-3 .hud-title {
+    font-size: 0.9rem !important;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  header.col-span-3 > div:last-child {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  header.col-span-3 > div:last-child span {
+    display: block;
+    overflow: hidden;
+    padding: 4px 6px !important;
+    font-size: 9px !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   main {
     grid-column: span 1;
-    height: 320px;
+    height: clamp(280px, 45svh, 380px);
+    min-width: 0;
   }
 
   aside {
     min-height: auto;
+    min-width: 0;
   }
 
   aside:first-of-type {
@@ -466,6 +500,38 @@ body {
   aside:last-of-type {
     grid-column: 1;
     grid-row: 4;
+  }
+
+  /* Keep canvas overlays inside the interactive area on narrow devices. */
+  main .absolute.top-8.left-8,
+  main .absolute.top-8.right-8 {
+    top: 16px;
+  }
+
+  main .absolute.top-8.left-8,
+  main .absolute.bottom-8.left-8 {
+    left: 16px;
+  }
+
+  main .absolute.top-8.right-8,
+  main .absolute.bottom-8.right-8 {
+    right: 16px;
+  }
+
+  main .absolute.bottom-8.left-8,
+  main .absolute.bottom-8.right-8 {
+    bottom: 16px;
+  }
+
+  main .absolute.bottom-6 {
+    bottom: 12px;
+    max-width: calc(100% - 24px);
+    padding: 6px 10px;
+  }
+
+  main .absolute.bottom-6 p {
+    font-size: 8px;
+    letter-spacing: 1px;
   }
 }
 
