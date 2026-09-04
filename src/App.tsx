@@ -1,154 +1,166 @@
-import { useState, useEffect } from 'react';
-import { MedicalCanvas } from './components/MedicalCanvas';
-import { VitalsPanel } from './components/VitalsPanel';
-import { ScanFlow } from './components/ScanFlow';
-import { DiagnosticReport } from './components/DiagnosticReport';
-import { ShieldCheck, Cpu, Database } from 'lucide-react';
+import { useEffect, useReducer, useRef, useState } from 'react';
+import { ClipboardList } from 'lucide-react';
+import { TaskComposer } from './components/TaskComposer';
+import { TaskFilters } from './components/TaskFilters';
+import { TaskList } from './components/TaskList';
+import { loadTasks, saveTasks } from './lib/taskStorage';
+import type { Task, TaskAction, TaskFilter } from './types/todo';
 
+interface TodoState {
+  filter: TaskFilter;
+  tasks: Task[];
+}
+
+const initialState: TodoState = {
+  filter: 'all',
+  tasks: [],
+};
+
+/**
+ * Creates an identifier for a new browser-local task.
+ */
+function createTaskId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
+ * Applies immutable task state transitions for the to-do application.
+ */
+export function todoReducer(state: TodoState, action: TaskAction): TodoState {
+  switch (action.type) {
+    case 'add':
+      return {
+        ...state,
+        tasks: [
+          {
+            id: createTaskId(),
+            title: action.title,
+            completed: false,
+            createdAt: new Date().toISOString(),
+          },
+          ...state.tasks,
+        ],
+      };
+    case 'toggle':
+      return {
+        ...state,
+        tasks: state.tasks.map((task) =>
+          task.id === action.id ? { ...task, completed: !task.completed } : task,
+        ),
+      };
+    case 'edit':
+      return {
+        ...state,
+        tasks: state.tasks.map((task) =>
+          task.id === action.id ? { ...task, title: action.title } : task,
+        ),
+      };
+    case 'delete':
+      return { ...state, tasks: state.tasks.filter((task) => task.id !== action.id) };
+    case 'clearCompleted':
+      return { ...state, tasks: state.tasks.filter((task) => !task.completed) };
+    case 'setFilter':
+      return { ...state, filter: action.filter };
+  }
+}
+
+// PUBLIC_INTERFACE
 function App() {
-  const [activeNode, setActiveNode] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState<boolean>(false);
-  const [scanProgress, setScanProgress] = useState<number>(0);
-  const [showReport, setShowReport] = useState<boolean>(false);
-  const [currentTime, setCurrentTime] = useState<string>('');
+  /** Renders the browser-local to-do application. */
+  const [state, dispatch] = useReducer(todoReducer, initialState, () => ({
+    ...initialState,
+    tasks: loadTasks(),
+  }));
+  const [composerError, setComposerError] = useState('');
+  const hasHydrated = useRef(false);
 
-  // 1. Digital HUD clock updating every second
   useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
-      const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.');
-      setCurrentTime(`${dateStr} // ${timeStr}`);
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // 2. Scan progress simulator
-  useEffect(() => {
-    let timer: number;
-    if (isScanning) {
-      const duration = 12000; // 12 seconds checkup scan
-      const intervalTime = 100;
-      const step = (100 / (duration / intervalTime));
-
-      timer = window.setInterval(() => {
-        setScanProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(timer);
-            return 100;
-          }
-          return prev + step;
-        });
-      }, intervalTime);
+    // Do not overwrite malformed or inaccessible storage during initial hydration.
+    if (!hasHydrated.current) {
+      hasHydrated.current = true;
+      return;
     }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [isScanning]);
 
-  const handleStartScan = () => {
-    setIsScanning(true);
-    setScanProgress(0);
-    setShowReport(false);
-  };
+    saveTasks(state.tasks);
+  }, [state.tasks]);
 
-  const handleCancelScan = () => {
-    setIsScanning(false);
-    setScanProgress(0);
-    setActiveNode(null);
-  };
+  const activeCount = state.tasks.filter((task) => !task.completed).length;
+  const completedCount = state.tasks.length - activeCount;
+  const visibleTasks = state.tasks.filter((task) => {
+    if (state.filter === 'active') {
+      return !task.completed;
+    }
+    if (state.filter === 'completed') {
+      return task.completed;
+    }
+    return true;
+  });
 
-  const handleScanComplete = () => {
-    setIsScanning(false);
-    setShowReport(true);
-    setActiveNode(null);
-  };
+  const handleAddTask = (title: string) => {
+    const trimmedTitle = title.trim();
 
-  const handleReset = () => {
-    setShowReport(false);
-    setScanProgress(0);
-    setActiveNode(null);
-  };
+    if (!trimmedTitle) {
+      setComposerError('Please enter a task before adding it.');
+      return false;
+    }
 
-  const handleSelectNode = (node: string) => {
-    if (isScanning) return; // ignore during scanning sequence
-    setActiveNode(prev => (prev === node ? null : node));
+    dispatch({ type: 'add', title: trimmedTitle });
+    setComposerError('');
+    return true;
   };
 
   return (
-    <div className="app-container">
-      {/* 1. Header HUD */}
-      <header className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20">
-        {/* Logo and system status */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-cyan rounded-full animate-pulse shadow-[0_0_8px_#00f0ff]" />
-            <h1 className="hud-title text-lg tracking-wider font-extrabold flex items-center gap-2">
-              AURA-3D <span className="text-xs font-semibold text-cyan hud-font bg-cyan/10 border border-cyan/25 px-2 py-0.5 rounded">V.6</span>
-            </h1>
+    <main className="todo-page">
+      <section className="todo-card" aria-labelledby="todo-title">
+        <header className="todo-header">
+          <div className="brand-mark" aria-hidden="true">
+            <ClipboardList size={25} strokeWidth={2.25} />
           </div>
-          <span className="text-[10px] text-text-muted font-mono tracking-widest hidden md:inline">
-            // HOLOGRAPHIC BIOSCAN PROTOCOL
-          </span>
-        </div>
-
-        {/* HUD Sub Stats Indicators */}
-        <div className="hidden lg:flex items-center gap-6 text-[10px] hud-font">
-          <div className="flex items-center gap-2 text-emerald">
-            <ShieldCheck size={14} />
-            <span>SECURE LINK</span>
+          <div>
+            <p className="eyebrow">A calmer way to plan</p>
+            <h1 id="todo-title">Today&apos;s tasks</h1>
+            <p className="subtitle">
+              {activeCount === 0
+                ? 'Everything is up to date.'
+                : `${activeCount} ${activeCount === 1 ? 'task' : 'tasks'} left to do.`}
+            </p>
           </div>
-          <div className="flex items-center gap-2 text-cyan">
-            <Cpu size={14} className="animate-spin-slow" />
-            <span>AI CORE: ACTIVE</span>
-          </div>
-          <div className="flex items-center gap-2 text-text-secondary">
-            <Database size={14} />
-            <span>LOCAL MEMORY</span>
-          </div>
-        </div>
+        </header>
 
-        {/* Realtime clock */}
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold">
-            {currentTime || 'LOADING...'}
-          </span>
-        </div>
-      </header>
-
-      {/* 2. Left Side - Telemetry Vitals */}
-      <aside className="border-r border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
-        <VitalsPanel />
-      </aside>
-
-      {/* 3. Center - 3D Render Canvas */}
-      <main className="relative flex items-center justify-center overflow-hidden">
-        <MedicalCanvas
-          activeNode={activeNode}
-          onSelectNode={handleSelectNode}
-          scanProgress={scanProgress}
-          isScanning={isScanning}
+        <TaskComposer error={composerError} onAddTask={handleAddTask} />
+        <TaskFilters
+          activeCount={activeCount}
+          completedCount={completedCount}
+          filter={state.filter}
+          onFilterChange={(filter) => dispatch({ type: 'setFilter', filter })}
         />
-      </main>
+        <TaskList
+          tasks={visibleTasks}
+          filter={state.filter}
+          onDelete={(id) => dispatch({ type: 'delete', id })}
+          onEdit={(id, title) => dispatch({ type: 'edit', id, title })}
+          onToggle={(id) => dispatch({ type: 'toggle', id })}
+        />
 
-      {/* 4. Right Side - Scan Flow Wizard / Diagnostic Report */}
-      <aside className="border-l border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
-        {!showReport ? (
-          <ScanFlow
-            isScanning={isScanning}
-            scanProgress={scanProgress}
-            onStartScan={handleStartScan}
-            onCancelScan={handleCancelScan}
-            onStepChange={setActiveNode}
-            onScanComplete={handleScanComplete}
-          />
-        ) : (
-          <DiagnosticReport onReset={handleReset} />
-        )}
-      </aside>
-    </div>
+        <footer className="todo-footer">
+          <span aria-live="polite">
+            {completedCount} {completedCount === 1 ? 'completed task' : 'completed tasks'}
+          </span>
+          <button
+            className="text-button"
+            disabled={completedCount === 0}
+            type="button"
+            onClick={() => dispatch({ type: 'clearCompleted' })}
+          >
+            Clear completed
+          </button>
+        </footer>
+      </section>
+    </main>
   );
 }
 
