@@ -27,8 +27,8 @@
   --border-cyan: rgba(0, 240, 255, 0.2);
   --border-white: rgba(255, 255, 255, 0.08);
   --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-secondary: #b6c4d6;
+  --text-muted: #9aaabd;
   
   /* Layout */
   --header-height: 70px;
@@ -46,7 +46,6 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  user-select: none;
 }
 
 body {
@@ -62,6 +61,23 @@ body {
   position: relative;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+[href],
+[tabindex]:not([tabindex="-1"]) {
+  outline: none;
+}
+
+button:focus-visible,
+[href]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 3px solid var(--color-cyan);
+  outline-offset: 3px;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 /* Grid & Layout */
@@ -201,6 +217,11 @@ body {
 
 .btn-neon:hover::before {
   left: 100%;
+}
+
+.btn-neon:focus-visible {
+  border-color: var(--color-cyan);
+  box-shadow: var(--glow-cyan);
 }
 
 .btn-neon-cyan:hover {
@@ -370,6 +391,17 @@ body {
   background: var(--color-magenta-glow);
   color: var(--color-magenta);
   border: 1px solid rgba(255, 42, 95, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ==========================================================================

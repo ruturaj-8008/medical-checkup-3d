@@ -319,9 +319,11 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
       className="relative w-full h-full cursor-crosshair overflow-hidden"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      role="region"
+      aria-label="Interactive holographic DNA model"
     >
       {/* ThreeJS Canvas */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" aria-hidden="true" />
 
       {/* Grid HUD Details */}
       <div className="grid-overlay" />
@@ -355,20 +357,26 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
           >
             {/* Glow Core Dot */}
             <button
+              type="button"
               onClick={() => onSelectNode(node.id)}
-              className={`group flex items-center justify-center relative w-5 h-5 rounded-full border transition-all duration-300 focus:outline-none ${
+              aria-label={`${node.name}: ${node.description}. ${isActive ? 'Selected' : 'Select for analysis'}`}
+              aria-pressed={isActive}
+              aria-describedby={`scan-node-description-${node.id}`}
+              disabled={isScanning}
+              className={`group flex items-center justify-center relative w-5 h-5 rounded-full border transition-all duration-300 ${
                 isActive 
                   ? 'bg-magenta border-magenta scale-125 shadow-[0_0_15px_#ff2a5f]' 
                   : 'bg-cyan/20 border-cyan hover:bg-cyan/50 hover:scale-110 hover:shadow-[0_0_10px_#00f0ff]'
-              }`}
+              } ${isScanning ? 'cursor-not-allowed opacity-60' : ''}`}
             >
-              <span className={`absolute w-3 h-3 rounded-full ${isActive ? 'bg-white animate-ping' : 'bg-cyan opacity-75'}`} />
+              <span className={`absolute w-3 h-3 rounded-full ${isActive ? 'bg-white animate-ping' : 'bg-cyan opacity-75'}`} aria-hidden="true" />
               
               {/* Tooltip Card (Projected Modern HUD Label) */}
               <div 
+                id={`scan-node-description-${node.id}`}
                 className={`absolute left-8 flex flex-col gap-1 p-3 w-56 rounded-lg glass-panel text-left pointer-events-none opacity-0 translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 ${
                   isActive ? 'border-magenta/40 bg-color-bg-panel-solid' : 'border-cyan/30'
-                }`}
+                } group-focus-within:opacity-100 group-focus-within:translate-x-0`}
               >
                 <div className="flex justify-between items-center">
                   <span className={`hud-font text-xs font-bold ${isActive ? 'text-magenta' : 'text-cyan'}`}>
@@ -394,7 +402,7 @@ export const MedicalCanvas: React.FC<MedicalCanvasProps> = ({
       {/* Floating Canvas Instructions */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center pointer-events-none bg-black/35 backdrop-blur-md px-4 py-2 border border-white/5 rounded-full">
         <p className="text-[10px] text-text-secondary uppercase tracking-widest hud-font">
-          Interactive Holographic DNA Model // Move mouse to tilt, click nodes to analyze
+          Interactive Holographic DNA Model // Move mouse to tilt, select nodes to analyze
         </p>
       </div>
     </div>

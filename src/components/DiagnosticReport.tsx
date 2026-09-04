@@ -174,10 +174,12 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
 
       {/* Action Trigger - Reset & Rescan */}
       <button
+        type="button"
         onClick={onReset}
         className="btn-neon btn-neon-magenta mt-2 py-3.5 font-bold text-xs w-full flex items-center justify-center gap-2"
+        aria-label="Reset telemetry and begin another diagnostic scan"
       >
-        <RefreshCw size={13} className="animate-spin-slow" />
+        <RefreshCw size={13} className="animate-spin-slow" aria-hidden="true" />
         Reset Telemetry & Rescan
       </button>
     </div>
