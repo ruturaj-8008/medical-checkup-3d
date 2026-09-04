@@ -1,0 +1,20 @@
+[project]
+name = "notes-api"
+version = "0.1.0"
+description = "A FastAPI notes API with reusable note tags."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.115.7",
+    "uvicorn[standard]==0.34.0",
+    "sqlalchemy==2.0.37",
+    "pydantic==2.10.6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx>=0.28.1",
+    "pytest==8.3.4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
