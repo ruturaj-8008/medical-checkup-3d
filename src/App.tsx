@@ -1,154 +1,242 @@
-import { useState, useEffect } from 'react';
-import { MedicalCanvas } from './components/MedicalCanvas';
-import { VitalsPanel } from './components/VitalsPanel';
-import { ScanFlow } from './components/ScanFlow';
-import { DiagnosticReport } from './components/DiagnosticReport';
-import { ShieldCheck, Cpu, Database } from 'lucide-react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Check, ListTodo, Plus, Trash2 } from 'lucide-react';
 
-function App() {
-  const [activeNode, setActiveNode] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState<boolean>(false);
-  const [scanProgress, setScanProgress] = useState<number>(0);
-  const [showReport, setShowReport] = useState<boolean>(false);
-  const [currentTime, setCurrentTime] = useState<string>('');
+type TaskFilter = 'all' | 'active' | 'completed';
 
-  // 1. Digital HUD clock updating every second
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
-      const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.');
-      setCurrentTime(`${dateStr} // ${timeStr}`);
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
+interface Task {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: number;
+}
 
-  // 2. Scan progress simulator
-  useEffect(() => {
-    let timer: number;
-    if (isScanning) {
-      const duration = 12000; // 12 seconds checkup scan
-      const intervalTime = 100;
-      const step = (100 / (duration / intervalTime));
+const STORAGE_KEY = 'todo-app.tasks';
 
-      timer = window.setInterval(() => {
-        setScanProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(timer);
-            return 100;
-          }
-          return prev + step;
-        });
-      }, intervalTime);
+/**
+ * Returns a safe task collection from browser storage, treating unavailable,
+ * malformed, and outdated values as an empty list.
+ */
+function loadTasks(): Task[] {
+  try {
+    const storedTasks = window.localStorage.getItem(STORAGE_KEY);
+
+    if (!storedTasks) {
+      return [];
     }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [isScanning]);
 
-  const handleStartScan = () => {
-    setIsScanning(true);
-    setScanProgress(0);
-    setShowReport(false);
+    const parsedTasks: unknown = JSON.parse(storedTasks);
+
+    if (!Array.isArray(parsedTasks)) {
+      return [];
+    }
+
+    return parsedTasks.filter(
+      (task): task is Task =>
+        typeof task === 'object' &&
+        task !== null &&
+        typeof task.id === 'string' &&
+        typeof task.title === 'string' &&
+        typeof task.completed === 'boolean' &&
+        typeof task.createdAt === 'number',
+    );
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Creates a browser-safe identifier with a fallback for environments that do
+ * not implement crypto.randomUUID.
+ */
+function createTaskId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+// PUBLIC_INTERFACE
+/**
+ * Renders a responsive, browser-local task list with add, complete, filter,
+ * delete, and completed-task cleanup controls.
+ *
+ * @returns The complete to-do application interface.
+ */
+function App() {
+  const [tasks, setTasks] = useState<Task[]>(loadTasks);
+  const [filter, setFilter] = useState<TaskFilter>('all');
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    } catch {
+      // Storage can be disabled or full; in-memory task management still works.
+    }
+  }, [tasks]);
+
+  const activeTaskCount = tasks.filter((task) => !task.completed).length;
+  const completedTaskCount = tasks.length - activeTaskCount;
+
+  const visibleTasks = useMemo(
+    () =>
+      tasks.filter((task) => {
+        if (filter === 'active') {
+          return !task.completed;
+        }
+
+        if (filter === 'completed') {
+          return task.completed;
+        }
+
+        return true;
+      }),
+    [filter, tasks],
+  );
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const title = newTaskTitle.trim();
+
+    if (!title) {
+      return;
+    }
+
+    setTasks((currentTasks) => [
+      ...currentTasks,
+      {
+        id: createTaskId(),
+        title,
+        completed: false,
+        createdAt: Date.now(),
+      },
+    ]);
+    setNewTaskTitle('');
   };
 
-  const handleCancelScan = () => {
-    setIsScanning(false);
-    setScanProgress(0);
-    setActiveNode(null);
+  const toggleTask = (taskId: string) => {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId ? { ...task, completed: !task.completed } : task,
+      ),
+    );
   };
 
-  const handleScanComplete = () => {
-    setIsScanning(false);
-    setShowReport(true);
-    setActiveNode(null);
+  const deleteTask = (taskId: string) => {
+    setTasks((currentTasks) => currentTasks.filter((task) => task.id !== taskId));
   };
 
-  const handleReset = () => {
-    setShowReport(false);
-    setScanProgress(0);
-    setActiveNode(null);
-  };
-
-  const handleSelectNode = (node: string) => {
-    if (isScanning) return; // ignore during scanning sequence
-    setActiveNode(prev => (prev === node ? null : node));
+  const clearCompletedTasks = () => {
+    setTasks((currentTasks) => currentTasks.filter((task) => !task.completed));
   };
 
   return (
-    <div className="app-container">
-      {/* 1. Header HUD */}
-      <header className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20">
-        {/* Logo and system status */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-cyan rounded-full animate-pulse shadow-[0_0_8px_#00f0ff]" />
-            <h1 className="hud-title text-lg tracking-wider font-extrabold flex items-center gap-2">
-              AURA-3D <span className="text-xs font-semibold text-cyan hud-font bg-cyan/10 border border-cyan/25 px-2 py-0.5 rounded">V.6</span>
-            </h1>
+    <main className="todo-page">
+      <section className="todo-card" aria-labelledby="todo-heading">
+        <header className="todo-header">
+          <div className="todo-title-group">
+            <span className="todo-icon" aria-hidden="true">
+              <ListTodo size={24} strokeWidth={2.4} />
+            </span>
+            <div>
+              <p className="eyebrow">Stay organized</p>
+              <h1 id="todo-heading">My tasks</h1>
+            </div>
           </div>
-          <span className="text-[10px] text-text-muted font-mono tracking-widest hidden md:inline">
-            // HOLOGRAPHIC BIOSCAN PROTOCOL
-          </span>
-        </div>
+          <p className="task-summary" aria-live="polite">
+            {activeTaskCount === 1 ? '1 task left' : `${activeTaskCount} tasks left`}
+          </p>
+        </header>
 
-        {/* HUD Sub Stats Indicators */}
-        <div className="hidden lg:flex items-center gap-6 text-[10px] hud-font">
-          <div className="flex items-center gap-2 text-emerald">
-            <ShieldCheck size={14} />
-            <span>SECURE LINK</span>
-          </div>
-          <div className="flex items-center gap-2 text-cyan">
-            <Cpu size={14} className="animate-spin-slow" />
-            <span>AI CORE: ACTIVE</span>
-          </div>
-          <div className="flex items-center gap-2 text-text-secondary">
-            <Database size={14} />
-            <span>LOCAL MEMORY</span>
-          </div>
-        </div>
-
-        {/* Realtime clock */}
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold">
-            {currentTime || 'LOADING...'}
-          </span>
-        </div>
-      </header>
-
-      {/* 2. Left Side - Telemetry Vitals */}
-      <aside className="border-r border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
-        <VitalsPanel />
-      </aside>
-
-      {/* 3. Center - 3D Render Canvas */}
-      <main className="relative flex items-center justify-center overflow-hidden">
-        <MedicalCanvas
-          activeNode={activeNode}
-          onSelectNode={handleSelectNode}
-          scanProgress={scanProgress}
-          isScanning={isScanning}
-        />
-      </main>
-
-      {/* 4. Right Side - Scan Flow Wizard / Diagnostic Report */}
-      <aside className="border-l border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
-        {!showReport ? (
-          <ScanFlow
-            isScanning={isScanning}
-            scanProgress={scanProgress}
-            onStartScan={handleStartScan}
-            onCancelScan={handleCancelScan}
-            onStepChange={setActiveNode}
-            onScanComplete={handleScanComplete}
+        <form className="task-form" onSubmit={handleSubmit}>
+          <label className="sr-only" htmlFor="new-task">
+            Add a new task
+          </label>
+          <input
+            id="new-task"
+            type="text"
+            value={newTaskTitle}
+            onChange={(event) => setNewTaskTitle(event.target.value)}
+            placeholder="What needs to be done?"
+            autoComplete="off"
+            maxLength={160}
           />
-        ) : (
-          <DiagnosticReport onReset={handleReset} />
-        )}
-      </aside>
-    </div>
+          <button className="add-button" type="submit">
+            <Plus size={20} aria-hidden="true" />
+            <span>Add task</span>
+          </button>
+        </form>
+
+        <div className="task-content">
+          {visibleTasks.length > 0 ? (
+            <ul className="task-list" aria-label={`${filter} tasks`}>
+              {visibleTasks.map((task) => (
+                <li className={`task-item${task.completed ? ' is-completed' : ''}`} key={task.id}>
+                  <label className="task-label">
+                    <input
+                      className="task-checkbox"
+                      type="checkbox"
+                      checked={task.completed}
+                      onChange={() => toggleTask(task.id)}
+                    />
+                    <span className="checkmark" aria-hidden="true">
+                      <Check size={15} strokeWidth={3} />
+                    </span>
+                    <span className="task-title">{task.title}</span>
+                  </label>
+                  <button
+                    className="delete-button"
+                    type="button"
+                    onClick={() => deleteTask(task.id)}
+                    aria-label={`Delete task: ${task.title}`}
+                  >
+                    <Trash2 size={18} aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="empty-state" role="status">
+              <span className="empty-icon" aria-hidden="true">
+                <Check size={22} />
+              </span>
+              <p>{tasks.length === 0 ? 'Your list is clear.' : `No ${filter} tasks.`}</p>
+              <span>
+                {tasks.length === 0
+                  ? 'Add a task above to get started.'
+                  : 'Choose another filter to see your tasks.'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <footer className="todo-footer">
+          <div className="filter-controls" aria-label="Filter tasks">
+            {(['all', 'active', 'completed'] as const).map((filterOption) => (
+              <button
+                className={`filter-button${filter === filterOption ? ' is-active' : ''}`}
+                type="button"
+                key={filterOption}
+                onClick={() => setFilter(filterOption)}
+                aria-pressed={filter === filterOption}
+              >
+                {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
+              </button>
+            ))}
+          </div>
+          <button
+            className="clear-button"
+            type="button"
+            onClick={clearCompletedTasks}
+            disabled={completedTaskCount === 0}
+          >
+            Clear completed
+          </button>
+        </footer>
+      </section>
+    </main>
   );
 }
 
