@@ -1,57 +1,80 @@
-import { useState, useEffect } from 'react';
-import { MedicalCanvas } from './components/MedicalCanvas';
-import { VitalsPanel } from './components/VitalsPanel';
-import { ScanFlow } from './components/ScanFlow';
+import { useEffect, useState } from 'react';
+import {
+  Activity,
+  Bell,
+  Cpu,
+  Database,
+  Menu,
+  ShieldCheck,
+  X,
+} from 'lucide-react';
 import { DiagnosticReport } from './components/DiagnosticReport';
-import { ShieldCheck, Cpu, Database } from 'lucide-react';
+import { MedicalCanvas } from './components/MedicalCanvas';
+import { ScanFlow } from './components/ScanFlow';
+import { VitalsPanel } from './components/VitalsPanel';
+import './App.css';
 
+/** Formats the live status timestamp shown in the dashboard header. */
+function getStatusTime(): string {
+  const now = new Date();
+  const date = now
+    .toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    })
+    .toUpperCase();
+
+  const time = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+
+  return `${date} · ${time}`;
+}
+
+// PUBLIC_INTERFACE
 function App() {
+  /** Renders the interactive diagnostic dashboard and manages the scan lifecycle. */
   const [activeNode, setActiveNode] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState<boolean>(false);
-  const [scanProgress, setScanProgress] = useState<number>(0);
-  const [showReport, setShowReport] = useState<boolean>(false);
-  const [currentTime, setCurrentTime] = useState<string>('');
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [showReport, setShowReport] = useState(false);
+  const [currentTime, setCurrentTime] = useState(getStatusTime);
+  const [isVitalsOpen, setIsVitalsOpen] = useState(false);
+  const [isControlOpen, setIsControlOpen] = useState(false);
 
-  // 1. Digital HUD clock updating every second
   useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
-      const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.');
-      setCurrentTime(`${dateStr} // ${timeStr}`);
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
+    const interval = window.setInterval(() => {
+      setCurrentTime(getStatusTime());
+    }, 1_000);
+
+    return () => window.clearInterval(interval);
   }, []);
 
-  // 2. Scan progress simulator
   useEffect(() => {
-    let timer: number;
-    if (isScanning) {
-      const duration = 12000; // 12 seconds checkup scan
-      const intervalTime = 100;
-      const step = (100 / (duration / intervalTime));
-
-      timer = window.setInterval(() => {
-        setScanProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(timer);
-            return 100;
-          }
-          return prev + step;
-        });
-      }, intervalTime);
+    if (!isScanning) {
+      return undefined;
     }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
+
+    const scanDurationMilliseconds = 12_000;
+    const tickMilliseconds = 100;
+    const step = 100 / (scanDurationMilliseconds / tickMilliseconds);
+
+    const timer = window.setInterval(() => {
+      setScanProgress((progress) => Math.min(progress + step, 100));
+    }, tickMilliseconds);
+
+    return () => window.clearInterval(timer);
   }, [isScanning]);
 
   const handleStartScan = () => {
     setIsScanning(true);
     setScanProgress(0);
     setShowReport(false);
+    setIsControlOpen(false);
   };
 
   const handleCancelScan = () => {
@@ -73,79 +96,117 @@ function App() {
   };
 
   const handleSelectNode = (node: string) => {
-    if (isScanning) return; // ignore during scanning sequence
-    setActiveNode(prev => (prev === node ? null : node));
+    if (!isScanning) {
+      setActiveNode((currentNode) => (currentNode === node ? null : node));
+    }
   };
 
   return (
-    <div className="app-container">
-      {/* 1. Header HUD */}
-      <header className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20">
-        {/* Logo and system status */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-cyan rounded-full animate-pulse shadow-[0_0_8px_#00f0ff]" />
-            <h1 className="hud-title text-lg tracking-wider font-extrabold flex items-center gap-2">
-              AURA-3D <span className="text-xs font-semibold text-cyan hud-font bg-cyan/10 border border-cyan/25 px-2 py-0.5 rounded">V.6</span>
-            </h1>
+    <div className="app-shell">
+      <header className="dashboard-header">
+        <div className="brand-lockup">
+          <button
+            type="button"
+            className="mobile-menu-button"
+            aria-label={isVitalsOpen ? 'Close telemetry panel' : 'Open telemetry panel'}
+            aria-expanded={isVitalsOpen}
+            onClick={() => setIsVitalsOpen((open) => !open)}
+          >
+            {isVitalsOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+
+          <div className="brand-mark" aria-hidden="true">
+            <Activity size={19} />
           </div>
-          <span className="text-[10px] text-text-muted font-mono tracking-widest hidden md:inline">
-            // HOLOGRAPHIC BIOSCAN PROTOCOL
-          </span>
+
+          <div>
+            <div className="brand-title-row">
+              <h1>AURA</h1>
+              <span className="version-chip">3D</span>
+            </div>
+            <p>Clinical intelligence workspace</p>
+          </div>
         </div>
 
-        {/* HUD Sub Stats Indicators */}
-        <div className="hidden lg:flex items-center gap-6 text-[10px] hud-font">
-          <div className="flex items-center gap-2 text-emerald">
+        <div className="header-statuses" aria-label="System status">
+          <span className="header-status status-secure">
             <ShieldCheck size={14} />
-            <span>SECURE LINK</span>
-          </div>
-          <div className="flex items-center gap-2 text-cyan">
-            <Cpu size={14} className="animate-spin-slow" />
-            <span>AI CORE: ACTIVE</span>
-          </div>
-          <div className="flex items-center gap-2 text-text-secondary">
+            Secure link
+          </span>
+          <span className="header-status status-active">
+            <Cpu size={14} />
+            AI core active
+          </span>
+          <span className="header-status status-muted">
             <Database size={14} />
-            <span>LOCAL MEMORY</span>
-          </div>
+            Local session
+          </span>
         </div>
 
-        {/* Realtime clock */}
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold">
-            {currentTime || 'LOADING...'}
-          </span>
+        <div className="header-actions">
+          <div className="live-clock" aria-label={`Current time: ${currentTime}`}>
+            <span className="live-indicator" />
+            {currentTime}
+          </div>
+          <button type="button" className="notification-button" aria-label="Notifications">
+            <Bell size={17} />
+            <span aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="control-menu-button"
+            aria-label={isControlOpen ? 'Close diagnostic controls' : 'Open diagnostic controls'}
+            aria-expanded={isControlOpen}
+            onClick={() => setIsControlOpen((open) => !open)}
+          >
+            {isControlOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
       </header>
 
-      {/* 2. Left Side - Telemetry Vitals */}
-      <aside className="border-r border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
+      <aside className={`dashboard-panel telemetry-panel ${isVitalsOpen ? 'is-open' : ''}`}>
         <VitalsPanel />
       </aside>
 
-      {/* 3. Center - 3D Render Canvas */}
-      <main className="relative flex items-center justify-center overflow-hidden">
-        <MedicalCanvas
-          activeNode={activeNode}
-          onSelectNode={handleSelectNode}
-          scanProgress={scanProgress}
-          isScanning={isScanning}
-        />
+      <main className="workspace">
+        <div className="workspace-heading">
+          <div>
+            <span className="eyebrow">Live diagnostic environment</span>
+            <h2>Biometric visualization</h2>
+          </div>
+          <div className={`scan-status ${isScanning ? 'is-scanning' : ''}`}>
+            <span />
+            {isScanning ? `Scanning ${Math.round(scanProgress)}%` : 'System ready'}
+          </div>
+        </div>
+
+        <section className="visualization-card" aria-label="Interactive biometric visualization">
+          <MedicalCanvas
+            activeNode={activeNode}
+            isScanning={isScanning}
+            scanProgress={scanProgress}
+            onSelectNode={handleSelectNode}
+          />
+        </section>
+
+        <div className="workspace-footer">
+          <span>Hover or select a biometric node to inspect it</span>
+          <span>{isScanning ? 'Automated sequence in progress' : 'Manual node selection enabled'}</span>
+        </div>
       </main>
 
-      {/* 4. Right Side - Scan Flow Wizard / Diagnostic Report */}
-      <aside className="border-l border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
-        {!showReport ? (
+      <aside className={`dashboard-panel control-panel ${isControlOpen ? 'is-open' : ''}`}>
+        {showReport ? (
+          <DiagnosticReport onReset={handleReset} />
+        ) : (
           <ScanFlow
             isScanning={isScanning}
             scanProgress={scanProgress}
-            onStartScan={handleStartScan}
             onCancelScan={handleCancelScan}
-            onStepChange={setActiveNode}
             onScanComplete={handleScanComplete}
+            onStartScan={handleStartScan}
+            onStepChange={setActiveNode}
           />
-        ) : (
-          <DiagnosticReport onReset={handleReset} />
         )}
       </aside>
     </div>
