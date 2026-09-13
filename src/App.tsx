@@ -48,6 +48,7 @@ function App() {
     };
   }, [isScanning]);
 
+  // Begins a new diagnostic scan.
   const handleStartScan = () => {
     setIsScanning(true);
     setScanProgress(0);
