@@ -1,154 +1,140 @@
-import { useState, useEffect } from 'react';
-import { MedicalCanvas } from './components/MedicalCanvas';
-import { VitalsPanel } from './components/VitalsPanel';
-import { ScanFlow } from './components/ScanFlow';
-import { DiagnosticReport } from './components/DiagnosticReport';
-import { ShieldCheck, Cpu, Database } from 'lucide-react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
+import './App.css';
+import {
+  createTask,
+  deleteTask,
+  getTasks,
+  toggleTask,
+  updateTask,
+} from './api/tasks';
+import { TodoForm } from './components/TodoForm';
+import { TodoList } from './components/TodoList';
+import type { Task } from './todo/types';
 
 function App() {
-  const [activeNode, setActiveNode] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState<boolean>(false);
-  const [scanProgress, setScanProgress] = useState<number>(0);
-  const [showReport, setShowReport] = useState<boolean>(false);
-  const [currentTime, setCurrentTime] = useState<string>('');
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMutating, setIsMutating] = useState(false);
+  const [pageError, setPageError] = useState<string | null>(null);
 
-  // 1. Digital HUD clock updating every second
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
-      const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.');
-      setCurrentTime(`${dateStr} // ${timeStr}`);
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
+  const loadTasks = useCallback(async () => {
+    setIsLoading(true);
+    setPageError(null);
+
+    try {
+      setTasks(await getTasks());
+    } catch (error) {
+      setPageError(
+        error instanceof Error ? error.message : 'Unable to load tasks. Please try again.',
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // 2. Scan progress simulator
   useEffect(() => {
-    let timer: number;
-    if (isScanning) {
-      const duration = 12000; // 12 seconds checkup scan
-      const intervalTime = 100;
-      const step = (100 / (duration / intervalTime));
+    void loadTasks();
+  }, [loadTasks]);
 
-      timer = window.setInterval(() => {
-        setScanProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(timer);
-            return 100;
-          }
-          return prev + step;
-        });
-      }, intervalTime);
+  const runMutation = async (action: () => Promise<void>) => {
+    setIsMutating(true);
+    setPageError(null);
+
+    try {
+      await action();
+    } catch (error) {
+      setPageError(
+        error instanceof Error ? error.message : 'Unable to save your change. Please try again.',
+      );
+    } finally {
+      setIsMutating(false);
     }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [isScanning]);
-
-  const handleStartScan = () => {
-    setIsScanning(true);
-    setScanProgress(0);
-    setShowReport(false);
   };
 
-  const handleCancelScan = () => {
-    setIsScanning(false);
-    setScanProgress(0);
-    setActiveNode(null);
+  const handleCreate = async (title: string) => {
+    await runMutation(async () => {
+      const task = await createTask({ title });
+      setTasks((currentTasks) => [task, ...currentTasks]);
+    });
   };
 
-  const handleScanComplete = () => {
-    setIsScanning(false);
-    setShowReport(true);
-    setActiveNode(null);
+  const handleToggle = async (task: Task) => {
+    await runMutation(async () => {
+      const updatedTask = await toggleTask(task.id);
+      setTasks((currentTasks) =>
+        currentTasks.map((currentTask) =>
+          currentTask.id === updatedTask.id ? updatedTask : currentTask,
+        ),
+      );
+    });
   };
 
-  const handleReset = () => {
-    setShowReport(false);
-    setScanProgress(0);
-    setActiveNode(null);
+  const handleUpdate = async (taskId: number, title: string) => {
+    await runMutation(async () => {
+      const updatedTask = await updateTask(taskId, { title });
+      setTasks((currentTasks) =>
+        currentTasks.map((task) => (task.id === updatedTask.id ? updatedTask : task)),
+      );
+    });
   };
 
-  const handleSelectNode = (node: string) => {
-    if (isScanning) return; // ignore during scanning sequence
-    setActiveNode(prev => (prev === node ? null : node));
+  const handleDelete = async (taskId: number) => {
+    await runMutation(async () => {
+      await deleteTask(taskId);
+      setTasks((currentTasks) => currentTasks.filter((task) => task.id !== taskId));
+    });
   };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+  };
+
+  const remainingTaskCount = tasks.filter((task) => !task.completed).length;
 
   return (
-    <div className="app-container">
-      {/* 1. Header HUD */}
-      <header className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20">
-        {/* Logo and system status */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-cyan rounded-full animate-pulse shadow-[0_0_8px_#00f0ff]" />
-            <h1 className="hud-title text-lg tracking-wider font-extrabold flex items-center gap-2">
-              AURA-3D <span className="text-xs font-semibold text-cyan hud-font bg-cyan/10 border border-cyan/25 px-2 py-0.5 rounded">V.6</span>
-            </h1>
-          </div>
-          <span className="text-[10px] text-text-muted font-mono tracking-widest hidden md:inline">
-            // HOLOGRAPHIC BIOSCAN PROTOCOL
-          </span>
-        </div>
+    <main className="todo-page">
+      <section className="todo-shell" aria-labelledby="page-title">
+        <header className="todo-header">
+          <p className="eyebrow">Simple, focused task management</p>
+          <h1 id="page-title">My tasks</h1>
+          <p className="todo-summary">
+            {remainingTaskCount === 0
+              ? 'You are all caught up.'
+              : `${remainingTaskCount} ${remainingTaskCount === 1 ? 'task' : 'tasks'} remaining.`}
+          </p>
+        </header>
 
-        {/* HUD Sub Stats Indicators */}
-        <div className="hidden lg:flex items-center gap-6 text-[10px] hud-font">
-          <div className="flex items-center gap-2 text-emerald">
-            <ShieldCheck size={14} />
-            <span>SECURE LINK</span>
-          </div>
-          <div className="flex items-center gap-2 text-cyan">
-            <Cpu size={14} className="animate-spin-slow" />
-            <span>AI CORE: ACTIVE</span>
-          </div>
-          <div className="flex items-center gap-2 text-text-secondary">
-            <Database size={14} />
-            <span>LOCAL MEMORY</span>
-          </div>
-        </div>
+        <form onSubmit={handleSubmit} noValidate>
+          <TodoForm isSubmitting={isMutating} onCreate={handleCreate} />
+        </form>
 
-        {/* Realtime clock */}
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold">
-            {currentTime || 'LOADING...'}
-          </span>
-        </div>
-      </header>
-
-      {/* 2. Left Side - Telemetry Vitals */}
-      <aside className="border-r border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
-        <VitalsPanel />
-      </aside>
-
-      {/* 3. Center - 3D Render Canvas */}
-      <main className="relative flex items-center justify-center overflow-hidden">
-        <MedicalCanvas
-          activeNode={activeNode}
-          onSelectNode={handleSelectNode}
-          scanProgress={scanProgress}
-          isScanning={isScanning}
-        />
-      </main>
-
-      {/* 4. Right Side - Scan Flow Wizard / Diagnostic Report */}
-      <aside className="border-l border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
-        {!showReport ? (
-          <ScanFlow
-            isScanning={isScanning}
-            scanProgress={scanProgress}
-            onStartScan={handleStartScan}
-            onCancelScan={handleCancelScan}
-            onStepChange={setActiveNode}
-            onScanComplete={handleScanComplete}
-          />
-        ) : (
-          <DiagnosticReport onReset={handleReset} />
+        {pageError && (
+          <section className="request-error" role="alert" aria-live="assertive">
+            <div>
+              <strong>Something went wrong.</strong>
+              <p>{pageError}</p>
+            </div>
+            <button className="retry-button" type="button" onClick={() => void loadTasks()}>
+              Try again
+            </button>
+          </section>
         )}
-      </aside>
-    </div>
+
+        {isLoading ? (
+          <p className="status-message" role="status">
+            Loading your tasks…
+          </p>
+        ) : (
+          <TodoList
+            tasks={tasks}
+            isMutating={isMutating}
+            onDelete={handleDelete}
+            onToggle={handleToggle}
+            onUpdate={handleUpdate}
+          />
+        )}
+      </section>
+    </main>
   );
 }
 

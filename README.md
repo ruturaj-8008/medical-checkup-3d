@@ -1,69 +1,45 @@
-# Aura-3D Medical Checkup Portal
+# To-Do Frontend
 
-A modern, highly interactive 3D Biometric Medical Checkup UI. Built using **React**, **TypeScript**, and **Three.js** (WebGL), featuring a futuristic dark glassmorphic medical HUD dashboard.
+A responsive React and TypeScript client for the FastAPI to-do service. It supports creating, viewing, editing, completing or reopening, and deleting persisted tasks.
 
-## 🚀 Features
+## Prerequisites
 
-- **3D Holographic Model Canvas**: Programmatically rendered rotating 3D DNA Double Helix using Three.js particles. Features interactive nodes representing organs (Cranial, Cardio, Pulmonary, Metabolic) that project responsive 2D glassmorphic tooltips in 3D coordinate space.
-- **Biometric Telemetry Panel**: Fluctuating vital metrics (Heart Rate, Blood Pressure, SpO2, Temperature, Respiration) showing slight real-time oscillations with scrolling EKG wave animations.
-- **Biometric Diagnostic Scanner**: Wizard workflow simulating a step-by-step full-body checkup scan, showing percentage tracking, active laser sweep bars, and real-time scrolling console terminal logs.
-- **Composite Health Report**: Dynamic summary display with an animated circular score meter, breakdown parameters, and actionable medical recommendations.
+- Node.js 18 or later
+- The FastAPI backend running locally (by default at `http://localhost:8000`)
 
----
+## Local setup
 
-## 🛠️ Installation & Setup
+1. Install dependencies:
 
-Follow these simple steps to install and run the application locally.
+   ```bash
+   npm install
+   ```
 
-### Prerequisites
+2. Copy the environment example to your local environment file and adjust the API URL only if your FastAPI service uses another origin:
 
-Ensure you have [Node.js](https://nodejs.org/) installed (v18.0.0 or higher is recommended) along with `npm` (Node Package Manager).
+   ```bash
+   cp .env.example .env.local
+   ```
 
-### 1. Clone or Open the Directory
+3. Start the Vite development server:
 
-Open your command line interface (Terminal / Command Prompt / PowerShell) and navigate to the project directory:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-cd C:\Users\rutur_zyan8vn\Desktop\medical-checkup-3d
-```
+The application uses `VITE_API_BASE_URL` for its backend origin. When unset, it defaults to `http://localhost:8000`. This client does not use localStorage as a fallback: the FastAPI service remains the source of truth for every task.
 
-### 2. Install Dependencies
+## Production build
 
-Install the required node packages (React, Three.js, TypeScript compiler, Lucide icons, Vite):
-
-```bash
-npm install
-```
-
-### 3. Start Local Dev Server
-
-Launch the Vite local development server:
-
-```bash
-npm run dev
-```
-
-The output will display the local URL (usually `http://localhost:5173`). Open this URL in your modern web browser to view the application.
-
----
-
-## 📦 Production Build
-
-To compile a highly optimized production bundle:
+Create an optimized frontend bundle with:
 
 ```bash
 npm run build
 ```
 
-This compiles TypeScript, compresses CSS/JS, and outputs ready-to-deploy static assets into a `./dist` folder.
+## Available commands
 
----
-
-## 🔬 Tech Stack
-
-- **Framework**: [React 19](https://react.dev/)
-- **Build Tool**: [Vite 6](https://vite.dev/)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **3D Engine**: [Three.js](https://threejs.org/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Styling**: Vanilla CSS (Variables, Flexbox/Grid, Glassmorphic backdrop filters, custom animations)
+- `npm run dev` — run the development server.
+- `npm run build` — type-check and create a production build.
+- `npm run lint` — run the configured linter.
+- `npm run preview` — serve a previously generated production build.
