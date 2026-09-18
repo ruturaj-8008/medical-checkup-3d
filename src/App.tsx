@@ -112,6 +112,9 @@ function App() {
 
         {/* Realtime clock */}
         <div className="flex items-center gap-3">
+          <span className="hidden sm:inline text-[9px] text-text-muted font-mono tracking-wider">
+            © 2026 AURA-3D
+          </span>
           <span className="text-[11px] hud-font text-cyan bg-cyan/5 border border-cyan/10 px-3.5 py-1 rounded font-bold">
             {currentTime || 'LOADING...'}
           </span>
