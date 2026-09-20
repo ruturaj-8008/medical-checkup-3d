@@ -438,13 +438,21 @@ body {
 
 /* Mobile Devices (max-width: 768px) */
 @media (max-width: 768px) {
+  :root {
+    --header-height: auto;
+  }
+
   .app-container {
     grid-template-columns: 1fr;
-    grid-template-rows: var(--header-height) 320px auto auto;
+    grid-template-rows: auto 320px auto auto;
   }
 
   header.col-span-3 {
     grid-column: span 1;
+    min-height: 64px;
+    gap: 12px;
+    padding: 10px 16px !important;
+    flex-wrap: wrap;
   }
 
   main {
@@ -467,6 +475,51 @@ body {
     grid-column: 1;
     grid-row: 4;
   }
+
+  /* Keep the header clock readable without forcing a horizontal overflow. */
+  header .hud-font.text-cyan {
+    font-size: 9px;
+    padding: 0.4rem 0.55rem;
+  }
+
+  /* Prevent visual HUD decorations and projected labels from exceeding the canvas. */
+  main .w-\[320px\] {
+    width: 240px;
+    height: 240px;
+  }
+
+  main .w-\[360px\] {
+    width: 270px;
+    height: 270px;
+  }
+
+  main .bottom-6 {
+    bottom: 12px;
+    max-width: calc(100% - 24px);
+    padding: 0.4rem 0.65rem;
+  }
+
+  main .bottom-6 p {
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+
+  /* Panels become comfortable full-width sections once stacked. */
+  aside > div {
+    padding: 16px;
+  }
+
+  .metric-card {
+    padding: 12px;
+  }
+
+  .metric-value {
+    font-size: 1.75rem;
+  }
+
+  .btn-neon {
+    min-height: 44px;
+  }
 }
 
 /* Very Small Mobile Devices (max-width: 480px) */
@@ -485,11 +538,30 @@ body {
   }
 
   .app-container {
-    grid-template-rows: var(--header-height) 280px auto auto;
+    grid-template-rows: auto 280px auto auto;
   }
 
   main {
     height: 280px;
+  }
+
+  header.col-span-3 {
+    justify-content: center;
+  }
+
+  header > div:first-child {
+    width: 100%;
+    justify-content: center;
+  }
+
+  main .w-\[320px\] {
+    width: 200px;
+    height: 200px;
+  }
+
+  main .w-\[360px\] {
+    width: 230px;
+    height: 230px;
   }
   
   .metric-value {
