@@ -78,13 +78,20 @@ function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className="app-container" aria-label="Aura 3D medical checkup dashboard">
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {isScanning
+          ? `Diagnostic scan in progress: ${Math.round(scanProgress)} percent complete.`
+          : showReport
+            ? 'Diagnostic report is ready.'
+            : 'Diagnostic scanner is ready.'}
+      </div>
       {/* 1. Header HUD */}
-      <header className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20">
+      <header className="col-span-3 border-b border-white/5 bg-black/45 backdrop-blur-md px-6 flex justify-between items-center z-20" aria-label="Application status">
         {/* Logo and system status */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-cyan rounded-full animate-pulse shadow-[0_0_8px_#00f0ff]" />
+            <span className="w-3 h-3 bg-cyan rounded-full animate-pulse shadow-[0_0_8px_#00f0ff]" aria-hidden="true" />
             <h1 className="hud-title text-lg tracking-wider font-extrabold flex items-center gap-2">
               AURA-3D <span className="text-xs font-semibold text-cyan hud-font bg-cyan/10 border border-cyan/25 px-2 py-0.5 rounded">V.6</span>
             </h1>
@@ -119,12 +126,12 @@ function App() {
       </header>
 
       {/* 2. Left Side - Telemetry Vitals */}
-      <aside className="border-r border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
+      <aside className="border-r border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden" aria-label="Live biometric telemetry">
         <VitalsPanel />
       </aside>
 
       {/* 3. Center - 3D Render Canvas */}
-      <main className="relative flex items-center justify-center overflow-hidden">
+      <main className="relative flex items-center justify-center overflow-hidden" aria-label="Interactive anatomical scan model">
         <MedicalCanvas
           activeNode={activeNode}
           onSelectNode={handleSelectNode}
@@ -134,7 +141,7 @@ function App() {
       </main>
 
       {/* 4. Right Side - Scan Flow Wizard / Diagnostic Report */}
-      <aside className="border-l border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden">
+      <aside className="border-l border-white/5 bg-black/25 backdrop-blur-sm z-10 overflow-hidden" aria-label={showReport ? 'Diagnostic report' : 'Diagnostic scan controls'}>
         {!showReport ? (
           <ScanFlow
             isScanning={isScanning}
