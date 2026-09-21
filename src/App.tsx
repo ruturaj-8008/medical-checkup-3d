@@ -5,6 +5,7 @@ import { ScanFlow } from './components/ScanFlow';
 import { DiagnosticReport } from './components/DiagnosticReport';
 import { ShieldCheck, Cpu, Database } from 'lucide-react';
 
+// Coordinates the dashboard's diagnostic workflow and supporting panels.
 function App() {
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState<boolean>(false);
