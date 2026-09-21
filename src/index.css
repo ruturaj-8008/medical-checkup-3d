@@ -445,11 +445,50 @@ body {
 
   header.col-span-3 {
     grid-column: span 1;
+    gap: 0.75rem;
+    padding-inline: 1rem !important;
+  }
+
+  header.col-span-3 > div:first-child {
+    min-width: 0;
+  }
+
+  header.col-span-3 > div:last-child {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  header.col-span-3 > div:last-child > span {
+    display: block;
+    overflow: hidden;
+    padding-inline: 0.5rem !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   main {
     grid-column: span 1;
     height: 320px;
+  }
+
+  main .w-\[320px\] {
+    width: min(320px, 78vw);
+    height: min(320px, 78vw);
+  }
+
+  main .w-\[360px\] {
+    width: min(360px, 88vw);
+    height: min(360px, 88vw);
+  }
+
+  main .bottom-6 {
+    bottom: 0.75rem;
+    max-width: calc(100% - 2rem);
+  }
+
+  main .bottom-6 p {
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
   }
 
   aside {
@@ -476,8 +515,8 @@ body {
     left: 6px !important; /* nudge tooltip closer to the node indicator */
   }
 
-  header.col-span-3 {
-    padding: 0 16px !important;
+  header.col-span-3 .hud-title > span {
+    display: none;
   }
 
   .hud-title {
