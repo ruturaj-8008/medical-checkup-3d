@@ -11,6 +11,7 @@ interface VitalMetric {
   color: string;
 }
 
+// Displays simulated live vital metrics and the rolling EKG waveform.
 export const VitalsPanel: React.FC = () => {
   const [heartRate, setHeartRate] = useState(72);
   const [temp, setTemp] = useState(36.6);
