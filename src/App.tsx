@@ -3,6 +3,7 @@ import { MedicalCanvas } from './components/MedicalCanvas';
 import { VitalsPanel } from './components/VitalsPanel';
 import { ScanFlow } from './components/ScanFlow';
 import { DiagnosticReport } from './components/DiagnosticReport';
+import { logRuntimeDiagnostic } from './lib/runtimeDiagnostics';
 import { ShieldCheck, Cpu, Database } from 'lucide-react';
 
 function App() {
@@ -49,24 +50,42 @@ function App() {
   }, [isScanning]);
 
   const handleStartScan = () => {
+    logRuntimeDiagnostic('scan.started', {
+      checkpoint: 'scan-start',
+      scanProgress,
+      reportVisible: showReport,
+    });
     setIsScanning(true);
     setScanProgress(0);
     setShowReport(false);
   };
 
   const handleCancelScan = () => {
+    logRuntimeDiagnostic('scan.cancelled', {
+      checkpoint: 'scan-cancel',
+      scanProgress: Math.round(scanProgress),
+      activeNode,
+    });
     setIsScanning(false);
     setScanProgress(0);
     setActiveNode(null);
   };
 
   const handleScanComplete = () => {
+    logRuntimeDiagnostic('scan.completed', {
+      checkpoint: 'scan-complete',
+      scanProgress: Math.round(scanProgress),
+    });
     setIsScanning(false);
     setShowReport(true);
     setActiveNode(null);
   };
 
   const handleReset = () => {
+    logRuntimeDiagnostic('report.reset', {
+      checkpoint: 'report-reset',
+      scanProgress: Math.round(scanProgress),
+    });
     setShowReport(false);
     setScanProgress(0);
     setActiveNode(null);
@@ -74,6 +93,11 @@ function App() {
 
   const handleSelectNode = (node: string) => {
     if (isScanning) return; // ignore during scanning sequence
+    logRuntimeDiagnostic('node.selected', {
+      checkpoint: 'node-selection',
+      node,
+      isDeselecting: activeNode === node,
+    });
     setActiveNode(prev => (prev === node ? null : node));
   };
 

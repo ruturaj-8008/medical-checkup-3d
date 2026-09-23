@@ -176,6 +176,7 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({ onReset }) =
       <button
         onClick={onReset}
         className="btn-neon btn-neon-magenta mt-2 py-3.5 font-bold text-xs w-full flex items-center justify-center gap-2"
+        data-testid="reset-telemetry"
       >
         <RefreshCw size={13} className="animate-spin-slow" />
         Reset Telemetry & Rescan

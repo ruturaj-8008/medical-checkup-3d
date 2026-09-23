@@ -190,6 +190,7 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
           <button
             onClick={handleStart}
             className="btn-neon btn-neon-cyan pulsing-hud-cyan py-4 font-bold text-sm w-full"
+            data-testid="start-diagnostic-scan"
           >
             <Play size={16} />
             Initialize Diagnostic Scan
@@ -215,7 +216,15 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
               </div>
 
               {/* Progress Slider Bar */}
-              <div className="w-full h-1.5 bg-white/5 border border-white/5 rounded-full overflow-hidden">
+              <div
+                aria-label="Diagnostic scan progress"
+                aria-valuemax={100}
+                aria-valuemin={0}
+                aria-valuenow={Math.round(scanProgress)}
+                data-testid="scan-progress"
+                role="progressbar"
+                className="w-full h-1.5 bg-white/5 border border-white/5 rounded-full overflow-hidden"
+              >
                 <div 
                   className="h-full bg-gradient-to-r from-cyan to-magenta transition-all duration-100" 
                   style={{ width: `${scanProgress}%` }}
@@ -254,6 +263,7 @@ export const ScanFlow: React.FC<ScanFlowProps> = ({
           <button
             onClick={onCancelScan}
             className="btn-neon btn-neon-magenta py-3 font-semibold text-xs w-full"
+            data-testid="abort-diagnostics"
           >
             <ShieldAlert size={14} />
             Abort Diagnostics
