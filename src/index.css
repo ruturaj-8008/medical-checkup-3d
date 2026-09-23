@@ -469,6 +469,65 @@ body {
   }
 }
 
+/* Narrow Mobile Devices (below 768px) */
+@media (max-width: 767px) {
+  :root {
+    --header-height: 64px;
+  }
+
+  .app-container {
+    grid-template-rows: var(--header-height) 300px auto auto;
+    min-width: 0;
+  }
+
+  header.col-span-3 {
+    padding: 0 12px !important;
+    gap: 8px;
+  }
+
+  header.col-span-3 h1 {
+    font-size: 0.9rem !important;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  header.col-span-3 > div:last-child {
+    min-width: 0;
+  }
+
+  header.col-span-3 > div:last-child span {
+    display: block;
+    max-width: 142px;
+    overflow: hidden;
+    padding-inline: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  main {
+    height: 300px;
+    min-width: 0;
+  }
+
+  aside {
+    min-width: 0;
+  }
+
+  /* Keep projected node tooltips inside the narrower visualization viewport. */
+  main .w-56 {
+    width: min(14rem, calc(100vw - 72px)) !important;
+  }
+
+  main .bottom-6 {
+    bottom: 12px;
+    max-width: calc(100% - 24px);
+  }
+
+  main .bottom-6 p {
+    line-height: 1.4;
+  }
+}
+
 /* Very Small Mobile Devices (max-width: 480px) */
 @media (max-width: 480px) {
   .w-56 {
