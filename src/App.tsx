@@ -48,6 +48,7 @@ function App() {
     };
   }, [isScanning]);
 
+  // Starts a new scan and clears any previous result.
   const handleStartScan = () => {
     setIsScanning(true);
     setScanProgress(0);
