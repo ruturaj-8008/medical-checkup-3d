@@ -66,6 +66,7 @@ function App() {
     setActiveNode(null);
   };
 
+  // Restores the dashboard to its initial scan state.
   const handleReset = () => {
     setShowReport(false);
     setScanProgress(0);
