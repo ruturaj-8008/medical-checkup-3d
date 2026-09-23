@@ -48,6 +48,7 @@ function App() {
     };
   }, [isScanning]);
 
+  // Begins a new scan and resets its related UI state.
   const handleStartScan = () => {
     setIsScanning(true);
     setScanProgress(0);
