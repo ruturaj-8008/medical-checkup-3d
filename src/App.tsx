@@ -49,6 +49,7 @@ function App() {
   }, [isScanning]);
 
   const handleStartScan = () => {
+    // Starts a fresh scan and clears prior results.
     setIsScanning(true);
     setScanProgress(0);
     setShowReport(false);
