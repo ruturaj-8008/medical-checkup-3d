@@ -48,6 +48,7 @@ function App() {
     };
   }, [isScanning]);
 
+  // Starts a fresh diagnostic scan and clears prior results.
   const handleStartScan = () => {
     setIsScanning(true);
     setScanProgress(0);
