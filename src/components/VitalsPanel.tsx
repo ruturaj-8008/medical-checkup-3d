@@ -135,6 +135,7 @@ export const VitalsPanel: React.FC = () => {
   ];
 
   // Helper to compile SVG polyline points string from EKG data array
+  // Converts rolling EKG samples into SVG coordinate pairs.
   const generateEkgPath = () => {
     const spacing = 7.5; // width spacing
     return ekgData.map((val, idx) => `${idx * spacing},${val}`).join(' ');
